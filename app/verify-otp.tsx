@@ -2,12 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ScreenHeader, OtpInput, Button } from '@/components/ui';
+
+type OtpMode = 'password-reset' | 'account-verify';
+
+const CONFIG = {
+  'password-reset': {
+    headerTitle: 'Security',
+    icon: 'lock-reset' as const,
+    title: 'Password Reset Code',
+    description: 'Enter the 6-digit code we sent to your email to reset your password',
+    buttonText: 'Verify & Reset Password',
+    canSkip: false,
+  },
+  'account-verify': {
+    headerTitle: 'Verification',
+    icon: 'shield-check' as const,
+    title: 'Account Verification',
+    description: 'We sent a verification code to confirm your email address',
+    buttonText: 'Verify Account',
+    canSkip: true,
+  },
+};
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
-  const [seconds, setSeconds] = useState(119); // 1:59
+  const params = useLocalSearchParams<{ mode?: string; email?: string }>();
+  const mode: OtpMode = (params.mode as OtpMode) || 'password-reset';
+  const email = params.email || 'm****@example.com';
+  const config = CONFIG[mode];
+
+  const [seconds, setSeconds] = useState(119);
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -18,22 +44,34 @@ export default function VerifyOtpScreen() {
   const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
   const secs = (seconds % 60).toString().padStart(2, '0');
 
+  const handleVerify = () => {
+    if (mode === 'password-reset') {
+      router.push('/set-new-password');
+    } else {
+      router.replace('/(main)/home');
+    }
+  };
+
+  const handleSkip = () => {
+    router.replace('/(main)/home');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
-      <ScreenHeader title="ReBank" />
+      <ScreenHeader title={config.headerTitle} />
 
       <View className="flex-1 items-center px-6">
         {/* Header */}
         <View className="items-center mt-8 mb-10">
           <View className="p-4 rounded-full bg-primary/10 mb-6">
-            <MaterialCommunityIcons name="lock-open" size={36} color="#2edc6b" />
+            <MaterialCommunityIcons name={config.icon} size={36} color="#2edc6b" />
           </View>
-          <Text className="text-white text-3xl font-manrope-extrabold tracking-tight mb-3">
-            Enter Verification Code
+          <Text className="text-white text-3xl font-manrope-extrabold tracking-tight mb-3 text-center">
+            {config.title}
           </Text>
           <Text className="text-slate-400 text-base font-manrope text-center leading-relaxed">
-            We sent a 6-digit code to your email{'\n'}
-            <Text className="font-manrope-semibold text-white">m****@example.com</Text>
+            {config.description}{'\n'}
+            <Text className="font-manrope-semibold text-white">{email}</Text>
           </Text>
         </View>
 
@@ -68,13 +106,22 @@ export default function VerifyOtpScreen() {
           </View>
         </View>
 
-        {/* Verify Button */}
-        <View className="w-full mb-8">
+        {/* Action Buttons */}
+        <View className="w-full gap-3 mb-8">
           <Button
-            title="Verify & Continue"
+            title={config.buttonText}
             variant="primary"
-            onPress={() => router.push('/set-new-password')}
+            onPress={handleVerify}
           />
+          {config.canSkip && (
+            <Pressable
+              className="flex-row items-center justify-center gap-2 py-3"
+              onPress={handleSkip}
+            >
+              <Text className="text-primary/50 text-sm font-manrope-semibold">Skip for now</Text>
+              <MaterialCommunityIcons name="arrow-right" size={16} color="rgba(46, 220, 107, 0.5)" />
+            </Pressable>
+          )}
         </View>
       </View>
     </SafeAreaView>

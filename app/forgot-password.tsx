@@ -46,7 +46,7 @@ export default function ForgotPasswordScreen() {
             <Button
               title="Send Reset Code"
               variant="primary"
-              onPress={() => router.push('/verify-otp')}
+              onPress={() => router.push({ pathname: '/verify-otp', params: { mode: 'password-reset' } })}
             />
             <Pressable
               className="flex-row items-center justify-center gap-2 py-2"

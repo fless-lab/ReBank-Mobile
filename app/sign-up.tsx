@@ -80,7 +80,11 @@ export default function SignUpScreen() {
 
           {/* Submit */}
           <View className="pt-4">
-            <Button title="Create Account" variant="primary" />
+            <Button
+              title="Create Account"
+              variant="primary"
+              onPress={() => router.push({ pathname: '/verify-otp', params: { mode: 'account-verify' } })}
+            />
           </View>
 
           {/* Footer */}
