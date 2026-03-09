@@ -1,12 +1,14 @@
 import React from 'react';
-import { Text, Pressable, ActivityIndicator, View } from 'react-native';
+import { Text, Pressable, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 interface ButtonProps {
   title: string;
   onPress?: () => void;
   variant?: 'primary' | 'outline' | 'ghost';
-  icon?: string;
+  icon?: IconName;
   iconComponent?: React.ReactNode;
   loading?: boolean;
   fullWidth?: boolean;
@@ -53,7 +55,7 @@ export function Button({
         <>
           {iconComponent}
           {icon && !iconComponent && (
-            <MaterialCommunityIcons name={icon as any} size={22} color={iconColor[variant]} />
+            <MaterialCommunityIcons name={icon} size={22} color={iconColor[variant]} />
           )}
           <Text className={textClasses[variant]}>{title}</Text>
           {variant === 'primary' && (

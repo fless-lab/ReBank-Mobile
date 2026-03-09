@@ -3,9 +3,12 @@ import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { NavBar, Input, Button } from '@/components/ui';
 
 export default function LoginScreen() {
+  const router = useRouter();
+
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
       <ScrollView
@@ -27,7 +30,7 @@ export default function LoginScreen() {
                 className="absolute inset-0 z-10"
               />
               <View className="flex-1 items-center justify-center">
-                <MaterialCommunityIcons name="shield-lock-outline" size={64} color="rgba(46, 220, 107, 0.3)" />
+                <MaterialCommunityIcons name="shield-lock" size={64} color="rgba(46, 220, 107, 0.3)" />
               </View>
             </View>
 
@@ -59,7 +62,7 @@ export default function LoginScreen() {
                 secureTextEntry
                 rightIcon="password"
                 rightAction={
-                  <Pressable>
+                  <Pressable onPress={() => router.push('/forgot-password')}>
                     <Text className="text-primary text-xs font-manrope-semibold">Forgot Password?</Text>
                   </Pressable>
                 }
@@ -69,27 +72,27 @@ export default function LoginScreen() {
               <Button
                 title="Login with Biometrics"
                 variant="outline"
-                iconComponent={
-                  <MaterialCommunityIcons name="fingerprint" size={22} color="#2edc6b" />
-                }
+                icon="fingerprint"
               />
 
               {/* Main Login Button */}
               <View className="pt-4">
-                <Button title="Log In" variant="primary" />
+                <Button title="Log In" variant="primary" onPress={() => router.replace('/(main)/home')} />
               </View>
             </View>
 
             {/* Footer */}
             <View className="items-center mt-8 gap-4">
-              <Text className="text-primary/40 text-sm font-manrope">
-                Don't have an account?{' '}
-                <Text className="text-primary font-manrope-bold">Apply Now</Text>
-              </Text>
+              <Pressable onPress={() => router.push('/sign-up')}>
+                <Text className="text-primary/40 text-sm font-manrope">
+                  Don't have an account?{' '}
+                  <Text className="text-primary font-manrope-bold">Apply Now</Text>
+                </Text>
+              </Pressable>
 
               <View className="flex-row gap-6 pt-4">
-                <MaterialCommunityIcons name="shield-check-outline" size={24} color="rgba(46, 220, 107, 0.3)" />
-                <MaterialCommunityIcons name="lock-outline" size={24} color="rgba(46, 220, 107, 0.3)" />
+                <MaterialCommunityIcons name="shield-check" size={24} color="rgba(46, 220, 107, 0.3)" />
+                <MaterialCommunityIcons name="lock" size={24} color="rgba(46, 220, 107, 0.3)" />
                 <MaterialCommunityIcons name="security" size={24} color="rgba(46, 220, 107, 0.3)" />
               </View>
             </View>

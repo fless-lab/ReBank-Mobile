@@ -2,3 +2,8 @@ export { Logo } from './Logo';
 export { Input } from './Input';
 export { Button } from './Button';
 export { NavBar } from './NavBar';
+export { ScreenHeader } from './ScreenHeader';
+export { OtpInput } from './OtpInput';
+export { TransferOptionCard } from './TransferOptionCard';
+export { QuickSendContact } from './QuickSendContact';
+export { RecentTransaction } from './RecentTransaction';
