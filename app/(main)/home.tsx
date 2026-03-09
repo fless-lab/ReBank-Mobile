@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Logo } from '@/components/ui';
+import { getUserProfile } from '@/utils/userStore';
 
 export default function HomeScreen() {
+  const [firstName, setFirstName] = useState('');
+
+  useEffect(() => {
+    getUserProfile().then((p) => setFirstName(p.name.split(' ')[0]));
+  }, []);
+
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
@@ -12,7 +18,7 @@ export default function HomeScreen() {
         <View className="flex-row items-center justify-between px-6 py-4">
           <View>
             <Text className="text-slate-400 text-sm font-manrope">Good morning,</Text>
-            <Text className="text-white text-xl font-manrope-bold">Jameson</Text>
+            <Text className="text-white text-xl font-manrope-bold">{firstName}</Text>
           </View>
           <View className="size-10 rounded-full bg-primary/20 items-center justify-center">
             <MaterialCommunityIcons name="bell" size={20} color="#2edc6b" />
