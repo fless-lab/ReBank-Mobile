@@ -6,7 +6,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  avatarUri: string; // local file URI or remote URL
+  avatarUri: string;
   memberSince: string;
 }
 
@@ -18,13 +18,13 @@ function generateRandomAvatar(seed: string): string {
 }
 
 export function createDefaultProfile(): UserProfile {
-  const name = 'Jameson Sterling';
+  const name = 'Raouf Sterling';
   return {
     name,
-    email: 'jameson@rebank.com',
-    phone: '+1 (555) 482-9100',
+    email: 'iam-raouf@rebank.com',
+    phone: '+212 (724) 485-3650',
     avatarUri: generateRandomAvatar(name + Date.now()),
-    memberSince: '2021',
+    memberSince: '2025',
   };
 }
 

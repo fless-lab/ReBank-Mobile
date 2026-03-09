@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button, OtpInput, ScreenHeader } from '@/components/ui';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ScreenHeader, OtpInput, Button } from '@/components/ui';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OtpMode = 'password-reset' | 'account-verify';
 
@@ -30,7 +30,7 @@ export default function VerifyOtpScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: string; email?: string }>();
   const mode: OtpMode = (params.mode as OtpMode) || 'password-reset';
-  const email = params.email || 'm****@example.com';
+  const email = params.email || 'r****@example.com';
   const config = CONFIG[mode];
 
   const [seconds, setSeconds] = useState(119);

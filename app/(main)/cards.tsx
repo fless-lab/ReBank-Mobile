@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React from 'react';
+import { ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CardsScreen() {
   return (
@@ -14,7 +14,7 @@ export default function CardsScreen() {
 
         {/* Card Preview */}
         <View className="px-6 mb-8">
-          <View className="w-full aspect-[1.58/1] bg-gradient-to-br rounded-2xl border border-slate-700/50 overflow-hidden p-6 justify-between" style={{ backgroundColor: '#1a2e23' }}>
+          <View className="w-full aspect-[2/1] bg-gradient-to-br rounded-2xl border border-slate-700/50 overflow-hidden p-6 justify-between" style={{ backgroundColor: '#1a2e23' }}>
             <View className="flex-row justify-between items-start">
               <MaterialCommunityIcons name="contactless-payment" size={32} color="#2edc6b" />
               <Text className="text-slate-500 font-manrope-bold text-xs uppercase tracking-widest">Elite Member</Text>
@@ -27,7 +27,7 @@ export default function CardsScreen() {
                 •••• •••• •••• 8829
               </Text>
               <Text className="text-slate-500 text-[10px] uppercase tracking-widest font-manrope">
-                Jameson Sterling
+                Raouf Sterling
               </Text>
             </View>
           </View>
