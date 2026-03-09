@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ScreenHeader, TransferOptionCard, QuickSendContact, RecentTransaction } from '@/components/ui';
+import { useRouter } from 'expo-router';
+import { TransferOptionCard, QuickSendContact, RecentTransaction } from '@/components/ui';
 
 const CONTACTS = [
   { name: 'New', isNew: true },
@@ -14,21 +15,50 @@ const CONTACTS = [
 ];
 
 export default function TransfersScreen() {
+  const router = useRouter();
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center px-4 py-3 justify-between border-b border-primary/10">
-          <View className="size-12 items-center justify-center">
+          <Pressable
+            className="size-12 items-center justify-center rounded-full active:bg-primary/10"
+            onPress={() => router.back()}
+          >
             <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-          </View>
+          </Pressable>
           <Text className="text-white text-lg font-manrope-bold tracking-tight flex-1 text-center">
             Transfer & Pay
           </Text>
-          <Pressable className="size-12 items-center justify-center rounded-full">
-            <MaterialCommunityIcons name="magnify" size={24} color="#fff" />
+          <Pressable
+            className="size-12 items-center justify-center rounded-full active:bg-primary/10"
+            onPress={() => setSearchVisible(!searchVisible)}
+          >
+            <MaterialCommunityIcons name={searchVisible ? 'close' : 'magnify'} size={24} color="#fff" />
           </Pressable>
         </View>
+
+        {/* Search Bar */}
+        {searchVisible && (
+          <View className="px-4 pt-3 pb-1">
+            <View className="relative">
+              <View className="absolute left-4 top-3.5 z-10">
+                <MaterialCommunityIcons name="magnify" size={20} color="rgba(46, 220, 107, 0.4)" />
+              </View>
+              <TextInput
+                className="w-full rounded-xl text-white border border-primary/20 bg-primary/5 h-12 pl-12 pr-4 text-sm font-manrope"
+                placeholder="Search transfers, contacts..."
+                placeholderTextColor="rgba(46, 220, 107, 0.3)"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+            </View>
+          </View>
+        )}
 
         {/* Transfer Options Grid */}
         <View className="px-4 pt-6">
