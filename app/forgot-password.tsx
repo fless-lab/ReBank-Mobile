@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button, Input, ScreenHeader } from '@/components/ui';
+import { ADMIN_CONTACTS } from '@/constants/contacts';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ScreenHeader, Input, Button } from '@/components/ui';
+import React from 'react';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -59,8 +60,12 @@ export default function ForgotPasswordScreen() {
         </View>
 
         {/* Help Card */}
+
         <View className="mt-auto px-6 py-8">
-          <View className="p-6 rounded-2xl bg-primary/5 border border-primary/10 flex-row items-center gap-4">
+          <Pressable
+            className="p-6 rounded-2xl bg-primary/5 border border-primary/10 flex-row items-center gap-4 active:bg-primary/10"
+            onPress={() => Linking.openURL(`whatsapp://send?phone=${ADMIN_CONTACTS.whatsapp.replace('+', '')}&text=Hello%20ReBank%20Support!`)}
+          >
             <View className="size-10 rounded-full bg-primary/20 items-center justify-center">
               <MaterialCommunityIcons name="face-agent" size={20} color="#2edc6b" />
             </View>
@@ -71,7 +76,7 @@ export default function ForgotPasswordScreen() {
               </Text>
             </View>
             <Text className="text-primary text-xs font-manrope-bold uppercase tracking-wider">Contact</Text>
-          </View>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
