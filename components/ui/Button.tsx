@@ -1,6 +1,6 @@
-import React from 'react';
-import { Text, Pressable, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React from 'react';
+import { ActivityIndicator, Pressable, Text } from 'react-native';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -12,6 +12,7 @@ interface ButtonProps {
   iconComponent?: React.ReactNode;
   loading?: boolean;
   fullWidth?: boolean;
+  disabled?: boolean;
 }
 
 export function Button({
@@ -22,6 +23,7 @@ export function Button({
   iconComponent,
   loading = false,
   fullWidth = true,
+  disabled = false,
 }: ButtonProps) {
   const baseClasses = 'flex-row items-center justify-center gap-2 h-14 rounded-xl';
 
@@ -45,9 +47,9 @@ export function Button({
 
   return (
     <Pressable
-      className={`${variantClasses[variant]} ${fullWidth ? 'w-full' : ''} active:opacity-80`}
+      className={`${variantClasses[variant]} ${fullWidth ? 'w-full' : ''} ${(disabled || loading) ? 'opacity-50' : 'active:opacity-80'}`}
       onPress={onPress}
-      disabled={loading}
+      disabled={disabled || loading}
     >
       {loading ? (
         <ActivityIndicator color={iconColor[variant]} />

@@ -1,12 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { View, TextInput } from 'react-native';
+import { TextInput, View } from 'react-native';
 
 interface OtpInputProps {
   length?: number;
   onComplete?: (code: string) => void;
+  onChange?: (code: string) => void;
+  error?: boolean;
 }
 
-export function OtpInput({ length = 6, onComplete }: OtpInputProps) {
+export function OtpInput({ length = 6, onComplete, onChange, error }: OtpInputProps) {
   const [values, setValues] = useState<string[]>(Array(length).fill(''));
   const refs = useRef<(TextInput | null)[]>(Array(length).fill(null));
 
@@ -32,6 +34,7 @@ export function OtpInput({ length = 6, onComplete }: OtpInputProps) {
     }
 
     const code = newValues.join('');
+    onChange?.(code);
     if (code.length === length && !newValues.includes('')) {
       onComplete?.(code);
     }
@@ -43,6 +46,9 @@ export function OtpInput({ length = 6, onComplete }: OtpInputProps) {
       const newValues = [...values];
       newValues[index - 1] = '';
       setValues(newValues);
+
+      const code = newValues.join('');
+      onChange?.(code);
     }
   };
 
@@ -52,7 +58,7 @@ export function OtpInput({ length = 6, onComplete }: OtpInputProps) {
         <TextInput
           key={index}
           ref={(el) => { refs.current[index] = el; }}
-          className="w-12 h-16 text-center text-2xl font-manrope-bold bg-primary/5 border-2 border-primary/20 rounded-xl text-white"
+          className={`w-12 h-16 text-center text-2xl font-manrope-bold ${error ? 'bg-red-500/5 border-red-500/50' : 'bg-primary/5 border-primary/20'} border-2 rounded-xl text-white`}
           maxLength={1}
           keyboardType="number-pad"
           value={values[index]}

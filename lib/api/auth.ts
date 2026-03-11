@@ -17,7 +17,7 @@ export const AuthService = {
     async login(data: LoginInput): Promise<AuthResponse> {
         await mockCall(null);
 
-        if (data.identifier === 'jameson@rebank.com' || data.identifier === 'iam-raouf@rebank.com') {
+        if (data.identifier === 'maximus@rebank.com' || data.identifier === 'iam-raouf@rebank.com') {
             if (data.password === '12345678') {
                 throw { message: 'Invalid credentials. Please try again.', status: 401 } as ApiError;
             }

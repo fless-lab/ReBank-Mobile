@@ -1,13 +1,35 @@
 import { Button, Input, ScreenHeader } from '@/components/ui';
 import { ADMIN_CONTACTS } from '@/constants/contacts';
+import { AuthService } from '@/lib/api/auth';
+import { RequestPasswordResetInput, requestPasswordResetSchema } from '@/lib/validations/auth';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { control, handleSubmit } = useForm<RequestPasswordResetInput>({
+    resolver: zodResolver(requestPasswordResetSchema),
+    defaultValues: { email: '' },
+  });
+
+  const onSubmit = async (data: RequestPasswordResetInput) => {
+    try {
+      setIsLoading(true);
+      await AuthService.requestPasswordReset(data);
+      router.push({ pathname: '/verify-otp', params: { mode: 'password-reset' } });
+    } catch (error: any) {
+      Alert.alert('Request Failed', error.message || 'An unexpected error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
@@ -35,23 +57,35 @@ export default function ForgotPasswordScreen() {
 
         {/* Form */}
         <View className="px-6 py-4 gap-6">
-          <Input
-            label="Email Address"
-            placeholder="e.g. julian@rebank.premium"
-            leftIcon="email"
-            keyboardType="email-address"
-            autoCapitalize="none"
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <Input
+                label="Email Address"
+                placeholder="e.g. julian@rebank.premium"
+                leftIcon="email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={error?.message}
+              />
+            )}
           />
 
           <View className="gap-4 pt-2">
             <Button
               title="Send Reset Code"
               variant="primary"
-              onPress={() => router.push({ pathname: '/verify-otp', params: { mode: 'password-reset' } })}
+              onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
             />
             <Pressable
               className="flex-row items-center justify-center gap-2 py-2"
               onPress={() => router.back()}
+              disabled={isLoading}
             >
               <MaterialCommunityIcons name="keyboard-backspace" size={18} color="rgba(46, 220, 107, 0.6)" />
               <Text className="text-primary/60 text-sm font-manrope-semibold">Back to login</Text>
@@ -60,7 +94,6 @@ export default function ForgotPasswordScreen() {
         </View>
 
         {/* Help Card */}
-
         <View className="mt-auto px-6 py-8">
           <Pressable
             className="p-6 rounded-2xl bg-primary/5 border border-primary/10 flex-row items-center gap-4 active:bg-primary/10"

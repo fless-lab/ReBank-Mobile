@@ -1,8 +1,12 @@
 import { Button, OtpInput, ScreenHeader } from '@/components/ui';
+import { AuthService } from '@/lib/api/auth';
+import { VerifyOtpInput, verifyOtpSchema } from '@/lib/validations/auth';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type OtpMode = 'password-reset' | 'account-verify';
@@ -34,6 +38,12 @@ export default function VerifyOtpScreen() {
   const config = CONFIG[mode];
 
   const [seconds, setSeconds] = useState(119);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { control, handleSubmit } = useForm<VerifyOtpInput>({
+    resolver: zodResolver(verifyOtpSchema),
+    defaultValues: { code: '' },
+  });
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -44,11 +54,20 @@ export default function VerifyOtpScreen() {
   const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
   const secs = (seconds % 60).toString().padStart(2, '0');
 
-  const handleVerify = () => {
-    if (mode === 'password-reset') {
-      router.push('/set-new-password');
-    } else {
-      router.replace('/(main)/home');
+  const onSubmit = async (data: VerifyOtpInput) => {
+    try {
+      setIsLoading(true);
+      const res = await AuthService.verifyOtp(data, mode);
+
+      if (mode === 'password-reset') {
+        router.push({ pathname: '/set-new-password', params: { token: res.token } });
+      } else {
+        router.replace('/(main)/home');
+      }
+    } catch (error: any) {
+      Alert.alert('Verification Failed', error.message || 'An unexpected error occurred.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,11 +96,21 @@ export default function VerifyOtpScreen() {
 
         {/* OTP Input */}
         <View className="w-full mb-10">
-          <OtpInput
-            length={6}
-            onComplete={(code) => {
-              console.log('OTP:', code);
-            }}
+          <Controller
+            control={control}
+            name="code"
+            render={({ field: { onChange }, fieldState: { error } }) => (
+              <View className="items-center">
+                <OtpInput
+                  length={6}
+                  onChange={onChange}
+                  error={!!error}
+                />
+                {error && (
+                  <Text className="text-red-400 text-xs font-manrope mt-2">{error.message}</Text>
+                )}
+              </View>
+            )}
           />
         </View>
 
@@ -100,7 +129,7 @@ export default function VerifyOtpScreen() {
           </View>
           <View className="flex-row items-center">
             <Text className="text-slate-400 text-sm font-manrope">Didn't receive the code? </Text>
-            <Pressable onPress={() => setSeconds(119)}>
+            <Pressable onPress={() => setSeconds(119)} disabled={isLoading}>
               <Text className="text-primary font-manrope-bold text-sm">Resend</Text>
             </Pressable>
           </View>
@@ -111,12 +140,14 @@ export default function VerifyOtpScreen() {
           <Button
             title={config.buttonText}
             variant="primary"
-            onPress={handleVerify}
+            onPress={handleSubmit(onSubmit)}
+            loading={isLoading}
           />
           {config.canSkip && (
             <Pressable
-              className="flex-row items-center justify-center gap-2 py-3"
+              className="flex-row items-center justify-center gap-2 py-3 disabled:opacity-50"
               onPress={handleSkip}
+              disabled={isLoading}
             >
               <Text className="text-primary/50 text-sm font-manrope-semibold">Skip for now</Text>
               <MaterialCommunityIcons name="arrow-right" size={16} color="rgba(46, 220, 107, 0.5)" />

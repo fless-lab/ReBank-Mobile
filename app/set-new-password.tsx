@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button, Input, ScreenHeader } from '@/components/ui';
+import { AuthService } from '@/lib/api/auth';
+import { SetNewPasswordInput, setNewPasswordSchema } from '@/lib/validations/auth';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { ScreenHeader, Input, Button } from '@/components/ui';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Requirement {
   label: string;
@@ -12,14 +16,38 @@ interface Requirement {
 
 export default function SetNewPasswordScreen() {
   const router = useRouter();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const params = useLocalSearchParams<{ token?: string }>();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { control, handleSubmit, watch } = useForm<SetNewPasswordInput>({
+    resolver: zodResolver(setNewPasswordSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const watchPassword = watch('password');
 
   const requirements: Requirement[] = [
-    { label: 'At least 8 characters long', met: password.length >= 8 },
-    { label: 'Include a number and a symbol', met: /\d/.test(password) && /[^a-zA-Z0-9]/.test(password) },
-    { label: 'One uppercase character', met: /[A-Z]/.test(password) },
+    { label: 'At least 8 characters long', met: watchPassword.length >= 8 },
+    { label: 'Include a number and a symbol', met: /\d/.test(watchPassword) && /[^a-zA-Z0-9]/.test(watchPassword) },
+    { label: 'One uppercase character', met: /[A-Z]/.test(watchPassword) },
   ];
+
+  const onSubmit = async (data: SetNewPasswordInput) => {
+    try {
+      setIsLoading(true);
+      await AuthService.setNewPassword(data, params.token || '');
+      Alert.alert('Success', 'Password has been successfully updated.', [
+        { text: 'Log In', onPress: () => router.replace('/') }
+      ]);
+    } catch (error: any) {
+      Alert.alert('Reset Failed', error.message || 'An unexpected error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
@@ -45,22 +73,38 @@ export default function SetNewPasswordScreen() {
 
         {/* Form */}
         <View className="px-6 gap-4">
-          <Input
-            label="New Password"
-            placeholder="Enter new password"
-            secureTextEntry
-            rightIcon="password"
-            value={password}
-            onChangeText={setPassword}
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <Input
+                label="New Password"
+                placeholder="Enter new password"
+                secureTextEntry
+                rightIcon="password"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={error?.message}
+              />
+            )}
           />
 
-          <Input
-            label="Confirm New Password"
-            placeholder="Confirm new password"
-            secureTextEntry
-            rightIcon="password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <Input
+                label="Confirm New Password"
+                placeholder="Confirm new password"
+                secureTextEntry
+                rightIcon="password"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={error?.message}
+              />
+            )}
           />
 
           {/* Requirements */}
@@ -82,7 +126,12 @@ export default function SetNewPasswordScreen() {
 
           {/* Submit */}
           <View className="pt-6 pb-6">
-            <Button title="Reset Password" variant="primary" />
+            <Button
+              title="Reset Password"
+              variant="primary"
+              onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
+            />
           </View>
 
           {/* Help */}
