@@ -1,6 +1,7 @@
 import { Button, HeroImage, Input, NavBar } from '@/components/ui';
 import { AuthService } from '@/lib/api/auth';
 import { LoginInput, loginSchema } from '@/lib/validations/auth';
+import { authenticateWithBiometrics } from '@/utils/biometrics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
@@ -30,6 +31,16 @@ export default function LoginScreen() {
       Alert.alert('Login Failed', error.message || 'An unexpected error occurred.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    setIsLoading(true);
+    const success = await authenticateWithBiometrics();
+    setIsLoading(false);
+
+    if (success) {
+      router.replace('/(main)/home');
     }
   };
 
@@ -101,6 +112,7 @@ export default function LoginScreen() {
                 variant="outline"
                 icon="fingerprint"
                 disabled={isLoading}
+                onPress={handleBiometricLogin}
               />
 
               <View className="pt-4">
