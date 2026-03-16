@@ -9,7 +9,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type OtpMode = 'password-reset' | 'account-verify';
+type OtpMode = 'password-reset' | 'account-verify' | '2fa-login';
 
 const CONFIG = {
   'password-reset': {
@@ -27,6 +27,14 @@ const CONFIG = {
     description: 'We sent a verification code to confirm your email address',
     buttonText: 'Verify Account',
     canSkip: true,
+  },
+  '2fa-login': {
+    headerTitle: '2FA Login',
+    icon: 'cellphone-key' as const,
+    title: 'Two-Factor Auth',
+    description: 'Enter the 6-digit code from your authenticator app to complete the login.',
+    buttonText: 'Verify & Login',
+    canSkip: false,
   },
 };
 

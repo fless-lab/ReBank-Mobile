@@ -25,8 +25,12 @@ export default function LoginScreen() {
   const onSubmit = async (data: LoginInput) => {
     try {
       setIsLoading(true);
-      await AuthService.login(data);
-      router.replace('/(main)/home');
+      const response = await AuthService.login(data);
+      if (response.requires2FA) {
+        router.push({ pathname: '/verify-otp', params: { mode: '2fa-login', email: data.identifier } });
+      } else {
+        router.replace('/(main)/home');
+      }
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'An unexpected error occurred.');
     } finally {

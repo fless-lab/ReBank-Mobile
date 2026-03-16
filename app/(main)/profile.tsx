@@ -93,13 +93,17 @@ export default function ProfileScreen() {
         {/* Menu Items */}
         <View className="px-6 gap-2">
           {[
-            { icon: 'account-edit' as const, title: 'Personal Info' },
-            { icon: 'shield-check' as const, title: 'Security' },
-            { icon: 'bell' as const, title: 'Notifications' },
-            { icon: 'help-circle' as const, title: 'Help & Support' },
-            { icon: 'file-document' as const, title: 'Legal' },
+            { icon: 'account-edit' as const, title: 'Personal Info', route: '/settings/personal-info' as any },
+            { icon: 'shield-check' as const, title: 'Security', route: '/settings/security' as any },
+            { icon: 'bell' as const, title: 'Notifications', route: null },
+            { icon: 'help-circle' as const, title: 'Help & Support', route: null },
+            { icon: 'file-document' as const, title: 'Legal', route: null },
           ].map((item) => (
-            <Pressable key={item.title} className="flex-row items-center gap-4 p-4 bg-primary/10 rounded-xl active:bg-primary/20">
+            <Pressable 
+              key={item.title} 
+              className="flex-row items-center gap-4 p-4 bg-primary/10 rounded-xl active:bg-primary/20"
+              onPress={() => item.route ? router.push(item.route) : Alert.alert('Coming Soon', `${item.title} settings are not implemented yet.`)}
+            >
               <View className="size-10 rounded-lg bg-primary/20 items-center justify-center">
                 <MaterialCommunityIcons name={item.icon} size={20} color="#2edc6b" />
               </View>

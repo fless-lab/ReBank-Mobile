@@ -1,15 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getUserProfile } from '@/utils/userStore';
+import { TransactionsService } from '@/lib/api/transactions';
+import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { Transaction } from '@/lib/mockDb';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [firstName, setFirstName] = useState('');
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  useEffect(() => {
-    getUserProfile().then((p) => setFirstName(p.name.split(' ')[0]));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getUserProfile().then((p) => setFirstName(p.name.split(' ')[0]));
+      const loadData = async () => {
+        const bal = await TransactionsService.getBalance();
+        const txs = await TransactionsService.getRecentTransactions(8);
+        setBalance(bal);
+        setTransactions(txs);
+      };
+      loadData();
+    }, [])
+  );
+
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
@@ -17,7 +40,7 @@ export default function HomeScreen() {
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 py-4">
           <View>
-            <Text className="text-slate-400 text-sm font-manrope">Good morning,</Text>
+            <Text className="text-slate-400 text-sm font-manrope">{getGreeting()},</Text>
             <Text className="text-white text-xl font-manrope-bold">{firstName}</Text>
           </View>
           <View className="size-10 rounded-full bg-primary/20 items-center justify-center">
@@ -31,7 +54,7 @@ export default function HomeScreen() {
             Total Balance
           </Text>
           <Text className="text-white text-4xl font-manrope-extrabold tracking-tight mb-1">
-            $24,562.80
+            ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
           <View className="flex-row items-center gap-1 mt-2">
             <MaterialCommunityIcons name="trending-up" size={16} color="#2edc6b" />
@@ -44,17 +67,24 @@ export default function HomeScreen() {
           <Text className="text-white text-lg font-manrope-bold tracking-tight mb-4">Quick Actions</Text>
           <View className="flex-row gap-4">
             {[
-              { icon: 'send' as const, label: 'Send' },
-              { icon: 'cash-plus' as const, label: 'Receive' },
-              { icon: 'qrcode-scan' as const, label: 'Scan' },
-              { icon: 'dots-horizontal' as const, label: 'More' },
+              { icon: 'send' as const, label: 'Send', route: '/transfer/send-friend' },
+              { icon: 'cash-plus' as const, label: 'Receive', route: null },
+              { icon: 'qrcode-scan' as const, label: 'Scan', route: null },
+              { icon: 'receipt' as const, label: 'Pay', route: '/transfer/pay-bills' },
             ].map((action) => (
-              <View key={action.label} className="flex-1 items-center gap-2">
+              <Pressable
+                key={action.label}
+                className="flex-1 items-center gap-2"
+                onPress={() => action.route
+                  ? router.push(action.route as any)
+                  : null
+                }
+              >
                 <View className="size-12 rounded-xl bg-primary/10 items-center justify-center">
                   <MaterialCommunityIcons name={action.icon} size={22} color="#2edc6b" />
                 </View>
                 <Text className="text-xs font-manrope-semibold text-slate-400">{action.label}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -62,26 +92,37 @@ export default function HomeScreen() {
         {/* Recent Transactions */}
         <View className="px-6">
           <Text className="text-white text-lg font-manrope-bold tracking-tight mb-4">Recent Transactions</Text>
-          {[
-            { icon: 'shopping-outline' as const, title: 'Amazon', date: 'Today', amount: '-$156.00' },
-            { icon: 'coffee' as const, title: 'Starbucks', date: 'Yesterday', amount: '-$8.50' },
-            { icon: 'cash-plus' as const, title: 'Salary Deposit', date: 'Mar 1', amount: '+$5,200.00' },
-          ].map((tx) => (
-            <View key={tx.title} className="flex-row items-center justify-between p-4 bg-primary/10 rounded-xl mb-2">
-              <View className="flex-row items-center gap-3">
-                <View className="size-10 rounded-full bg-slate-800 items-center justify-center">
-                  <MaterialCommunityIcons name={tx.icon} size={20} color="#94a3b8" />
+          {transactions.map((tx) => {
+            const isPositive = tx.amount > 0;
+            const amountStr = `${isPositive ? '+' : '-'}$${Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+            const dateStr = new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+            return (
+              <Pressable
+                key={tx.id}
+                className="flex-row items-center justify-between p-4 bg-primary/10 rounded-xl mb-2 active:bg-primary/20"
+                onPress={() => router.push({ pathname: '/transaction/[id]' as any, params: { id: tx.id } })}
+              >
+                <View className="flex-row items-center gap-3">
+                  <View className="size-10 rounded-full bg-slate-800 items-center justify-center">
+                    <MaterialCommunityIcons name={tx.icon as any} size={20} color="#94a3b8" />
+                  </View>
+                  <View>
+                    <Text className="text-sm font-manrope-bold text-white">{tx.title}</Text>
+                    <Text className="text-xs text-slate-500 font-manrope">{dateStr}</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text className="text-sm font-manrope-bold text-white">{tx.title}</Text>
-                  <Text className="text-xs text-slate-500 font-manrope">{tx.date}</Text>
+                <View className="items-end">
+                  <Text className={`text-sm font-manrope-bold ${isPositive ? 'text-primary' : 'text-white'}`}>
+                    {amountStr}
+                  </Text>
+                  <View className={`px-2 py-0.5 rounded-full mt-1 ${tx.status === 'completed' ? 'bg-primary/10' : tx.status === 'pending' ? 'bg-yellow-500/10' : 'bg-red-500/10'}`}>
+                    <Text className={`text-[10px] font-manrope-bold uppercase ${tx.status === 'completed' ? 'text-primary' : tx.status === 'pending' ? 'text-yellow-400' : 'text-red-400'}`}>{tx.status}</Text>
+                  </View>
                 </View>
-              </View>
-              <Text className={`text-sm font-manrope-bold ${tx.amount.startsWith('+') ? 'text-primary' : 'text-white'}`}>
-                {tx.amount}
-              </Text>
-            </View>
-          ))}
+              </Pressable>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>

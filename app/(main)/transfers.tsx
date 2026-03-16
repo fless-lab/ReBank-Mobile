@@ -1,23 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { TransferOptionCard, QuickSendContact, RecentTransaction } from '@/components/ui';
-
-const CONTACTS = [
-  { name: 'New', isNew: true },
-  { name: 'Marcus' },
-  { name: 'Elena' },
-  { name: 'Julian' },
-  { name: 'Sarah' },
-  { name: 'David' },
-];
+import { ContactsService } from '@/lib/api/contacts';
+import { TransactionsService } from '@/lib/api/transactions';
+import { Contact, Transaction } from '@/lib/mockDb';
 
 export default function TransfersScreen() {
   const router = useRouter();
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [recentTx, setRecentTx] = useState<Transaction[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      ContactsService.getContacts().then(setContacts);
+      TransactionsService.getTransactionsByCategory('transfer').then(txs => setRecentTx(txs.slice(0, 4)));
+    }, [])
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
@@ -69,6 +73,7 @@ export default function TransfersScreen() {
                 icon="swap-horizontal"
                 title="Between Accounts"
                 subtitle="Move money instantly"
+                onPress={() => router.push('/transfer/between-accounts' as any)}
               />
             </View>
             <View className="w-[48%]">
@@ -76,6 +81,7 @@ export default function TransfersScreen() {
                 icon="account-plus"
                 title="Send to Friend"
                 subtitle="Split costs easily"
+                onPress={() => router.push('/transfer/send-friend' as any)}
               />
             </View>
             <View className="w-[48%]">
@@ -83,6 +89,7 @@ export default function TransfersScreen() {
                 icon="earth"
                 title="International"
                 subtitle="Global remittances"
+                onPress={() => router.push('/transfer/international' as any)}
               />
             </View>
             <View className="w-[48%]">
@@ -90,6 +97,7 @@ export default function TransfersScreen() {
                 icon="receipt"
                 title="Pay Bills"
                 subtitle="Scheduled payments"
+                onPress={() => router.push('/transfer/pay-bills' as any)}
               />
             </View>
           </View>
@@ -99,34 +107,51 @@ export default function TransfersScreen() {
         <View className="mt-8">
           <View className="flex-row items-center justify-between px-4 mb-4">
             <Text className="text-white text-lg font-manrope-bold tracking-tight">Quick Send</Text>
-            <Text className="text-primary text-sm font-manrope-semibold">See all</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-4 gap-4 pb-4">
-            {CONTACTS.map((contact, index) => (
+            <QuickSendContact name="New" isNew onPress={() => router.push('/transfer/send-friend' as any)} />
+            {contacts.map((contact) => (
               <QuickSendContact
-                key={index}
-                name={contact.name}
-                isNew={contact.isNew}
+                key={contact.id}
+                name={contact.name.split(' ')[0]}
+                onPress={() => router.push({
+                  pathname: '/transfer/send-friend' as any,
+                  params: { preselect: contact.id },
+                })}
               />
             ))}
           </ScrollView>
         </View>
 
-        {/* Recent Activity */}
+        {/* Recent Transfers */}
         <View className="px-4 mt-8">
-          <Text className="text-white text-lg font-manrope-bold tracking-tight mb-4">Recent</Text>
-          <RecentTransaction
-            icon="lightning-bolt"
-            title="Electric Co."
-            date="Oct 12, 2023"
-            amount="-$84.20"
-          />
-          <RecentTransaction
-            icon="wifi"
-            title="Internet Bill"
-            date="Oct 10, 2023"
-            amount="-$55.00"
-          />
+          <Text className="text-white text-lg font-manrope-bold tracking-tight mb-4">Recent Transfers</Text>
+          {recentTx.map(tx => {
+            const dateStr = new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            return (
+              <Pressable
+                key={tx.id}
+                className="flex-row items-center justify-between p-4 bg-primary/5 rounded-xl mb-2 active:bg-primary/10"
+                onPress={() => router.push({ pathname: '/transaction/[id]' as any, params: { id: tx.id } })}
+              >
+                <View className="flex-row items-center gap-3">
+                  <View className="size-10 rounded-full bg-slate-800 items-center justify-center">
+                    <MaterialCommunityIcons name={(tx.icon || 'swap-horizontal') as any} size={20} color="#94a3b8" />
+                  </View>
+                  <View>
+                    <Text className="text-sm font-manrope-bold text-white">{tx.title}</Text>
+                    <Text className="text-xs text-slate-500 font-manrope">{dateStr}</Text>
+                  </View>
+                </View>
+                <Text className="text-white text-sm font-manrope-bold">
+                  ${Math.abs(tx.amount).toFixed(2)}
+                </Text>
+              </Pressable>
+            );
+          })}
+          {recentTx.length === 0 && (
+            <Text className="text-slate-500 text-sm font-manrope text-center mt-4">No recent transfers</Text>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

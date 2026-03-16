@@ -8,6 +8,8 @@ export interface UserProfile {
   phone: string;
   avatarUri: string;
   memberSince: string;
+  is2FAEnabled: boolean;
+  biometricsEnabled: boolean;
 }
 
 const AVATAR_STYLES = ['adventurer', 'avataaars', 'bottts', 'fun-emoji', 'lorelei', 'notionists', 'pixel-art'];
@@ -25,6 +27,8 @@ export function createDefaultProfile(): UserProfile {
     phone: '+212 (724) 485-3650',
     avatarUri: generateRandomAvatar(name + Date.now()),
     memberSince: '2025',
+    is2FAEnabled: false,
+    biometricsEnabled: false,
   };
 }
 

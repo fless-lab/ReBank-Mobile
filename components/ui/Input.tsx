@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, Text, TextInput, TextInputProps, View } from 'react-native';
 
-type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 interface InputProps extends TextInputProps {
   label: string;

@@ -33,6 +33,9 @@ export default function RootLayout() {
       <Stack.Screen name="verify-otp" />
       <Stack.Screen name="set-new-password" />
       <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
+      <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="transfer" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="transaction" options={{ animation: 'slide_from_right' }} />
     </Stack>
   );
 }

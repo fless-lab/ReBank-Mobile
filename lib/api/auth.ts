@@ -11,6 +11,7 @@ import { ApiError, mockCall } from './client';
 export interface AuthResponse {
     token: string;
     user: UserProfile;
+    requires2FA?: boolean;
 }
 
 export const AuthService = {
@@ -23,9 +24,20 @@ export const AuthService = {
             }
         }
 
+        const { getUserProfile } = await import('@/utils/userStore');
+        const user = await getUserProfile();
+
+        if (user.is2FAEnabled) {
+            return {
+                token: '',
+                user,
+                requires2FA: true,
+            };
+        }
+
         return {
             token: 'mock-jwt-token-xyz-123',
-            user: createDefaultProfile(),
+            user,
         };
     },
 
@@ -42,7 +54,7 @@ export const AuthService = {
         return { message: 'If an account exists, a reset code has been sent.' };
     },
 
-    async verifyOtp(data: VerifyOtpInput, mode: 'password-reset' | 'account-verify'): Promise<{ valid: boolean, token?: string }> {
+    async verifyOtp(data: VerifyOtpInput, mode: 'password-reset' | 'account-verify' | '2fa-login'): Promise<{ valid: boolean, token?: string }> {
         await mockCall(null);
         if (data.code === '000000') {
             throw { message: 'Invalid verification code.', status: 400 } as ApiError;
