@@ -53,18 +53,18 @@ export function OtpInput({ length = 6, onComplete, onChange, error }: OtpInputPr
   };
 
   return (
-    <View className="flex-row justify-center gap-3">
+    <View className="flex-row justify-center gap-2">
       {Array.from({ length }).map((_, index) => (
         <TextInput
           key={index}
           ref={(el) => { refs.current[index] = el; }}
-          className={`w-12 h-16 text-center text-2xl font-manrope-bold ${error ? 'bg-red-500/5 border-red-500/50' : 'bg-primary/5 border-primary/20'} border-2 rounded-xl text-white`}
+          className={`w-[50px] h-[68px] text-center text-3xl font-manrope-bold ${error ? 'bg-red-500/5 border-red-500/50' : 'bg-surface border-border'} border-2 rounded-2xl text-foreground`}
           maxLength={1}
           keyboardType="number-pad"
           value={values[index]}
           onChangeText={(text) => handleChange(text, index)}
           onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-          placeholderTextColor="rgba(46, 220, 107, 0.2)"
+          placeholderTextColor="#B5A99D"
           placeholder="•"
         />
       ))}

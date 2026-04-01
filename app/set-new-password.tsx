@@ -1,7 +1,7 @@
 import { Button, Input, ScreenHeader } from '@/components/ui';
 import { AuthService } from '@/lib/api/auth';
 import { SetNewPasswordInput, setNewPasswordSchema } from '@/lib/validations/auth';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { ShieldKeyhole, Lock, LockKeyhole } from '@solar-icons/react-native/BoldDuotone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -35,12 +35,12 @@ export default function SetNewPasswordScreen() {
         resetToken, resetExp, email, data.password,
       );
       Alert.alert(
-        'Password Reset',
-        response.message || 'Your password has been reset successfully.',
-        [{ text: 'Log In', onPress: () => router.replace('/') }],
+        'Mot de Passe Réinitialisé',
+        response.message || 'Votre mot de passe a été réinitialisé avec succès.',
+        [{ text: 'Se Connecter', onPress: () => router.replace('/') }],
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to reset password.');
+      Alert.alert('Erreur', error.message || 'Impossible de réinitialiser le mot de passe.');
     } finally {
       setIsLoading(false);
     }
@@ -53,18 +53,18 @@ export default function SetNewPasswordScreen() {
         contentContainerClassName="flex-grow"
         keyboardShouldPersistTaps="handled"
       >
-        <ScreenHeader title="New Password" />
+        <ScreenHeader title="Nouveau Mot de Passe" />
 
         <View className="flex-1 px-6">
           <View className="mt-8 mb-10">
-            <View className="bg-primary/10 p-3 rounded-xl self-start mb-6">
-              <MaterialCommunityIcons name="shield-key" size={28} color="#2edc6b" />
+            <View className="bg-surface-hover p-3 rounded-xl self-start mb-6">
+              <ShieldKeyhole size={28} color="#8B6F47" />
             </View>
-            <Text className="text-white tracking-tight text-3xl font-manrope-extrabold leading-tight mb-3">
-              Set New Password
+            <Text className="text-foreground tracking-tight text-3xl font-manrope-extrabold leading-tight mb-3">
+              Nouveau Mot de Passe
             </Text>
-            <Text className="text-slate-400 text-base font-manrope leading-relaxed">
-              Create a strong password to secure your account.
+            <Text className="text-muted text-base font-manrope leading-relaxed">
+              Créez un mot de passe sécurisé pour protéger votre compte.
             </Text>
           </View>
 
@@ -74,9 +74,9 @@ export default function SetNewPasswordScreen() {
               name="password"
               render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <Input
-                  label="New Password"
+                  label="Nouveau Mot de Passe"
                   placeholder="••••••••••"
-                  leftIcon="lock"
+                  leftIcon={<Lock size={22} color="#8C7B6B" />}
                   secureTextEntry
                   rightIcon="password"
                   value={value}
@@ -92,9 +92,9 @@ export default function SetNewPasswordScreen() {
               name="confirmPassword"
               render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <Input
-                  label="Confirm Password"
+                  label="Confirmer le Mot de Passe"
                   placeholder="••••••••••"
-                  leftIcon="lock-check"
+                  leftIcon={<LockKeyhole size={22} color="#8C7B6B" />}
                   secureTextEntry
                   rightIcon="password"
                   value={value}
@@ -105,18 +105,18 @@ export default function SetNewPasswordScreen() {
               )}
             />
 
-            <View className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-              <Text className="text-xs font-manrope-bold uppercase tracking-wider text-primary/50 mb-2">
-                Password Requirements
+            <View className="bg-surface rounded-2xl p-4 border border-border">
+              <Text className="text-xs font-manrope-bold uppercase tracking-wider text-muted mb-2">
+                Exigences du mot de passe
               </Text>
-              <Text className="text-slate-400 text-xs font-manrope leading-relaxed">
-                Min. 10 characters, with uppercase, lowercase, number, and special character.
+              <Text className="text-muted text-xs font-manrope leading-relaxed">
+                Min. 10 caractères, avec majuscule, minuscule, chiffre et caractère spécial.
               </Text>
             </View>
 
             <View className="pt-4">
               <Button
-                title="Reset Password"
+                title="Réinitialiser le Mot de Passe"
                 variant="primary"
                 onPress={handleSubmit(onSubmit)}
                 loading={isLoading}

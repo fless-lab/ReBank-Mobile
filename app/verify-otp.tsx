@@ -1,7 +1,7 @@
 import { Button, OtpInput, ScreenHeader } from '@/components/ui';
 import { AuthService } from '@/lib/api/auth';
 import { VerifyOtpInput, verifyOtpSchema } from '@/lib/validations/auth';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Smartphone, ShieldCheck, LockKeyholeUnlocked } from '@solar-icons/react-native/BoldDuotone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -13,25 +13,25 @@ type OtpMode = 'account-verify' | '2fa-login' | 'password-reset';
 
 const CONFIG = {
   '2fa-login': {
-    headerTitle: 'Verification',
-    icon: 'cellphone-key' as const,
-    title: 'Two-Factor Auth',
-    description: 'Enter the 6-digit code we sent to',
-    buttonText: 'Verify & Login',
+    headerTitle: 'Authentification',
+    icon: Smartphone,
+    title: 'Double Authentification',
+    description: 'Entrez le code à 6 chiffres envoyé à',
+    buttonText: 'Vérifier & Se Connecter',
   },
   'account-verify': {
-    headerTitle: 'Verification',
-    icon: 'shield-check' as const,
-    title: 'Verify Your Email',
-    description: 'Enter the 6-digit code we sent to',
-    buttonText: 'Verify Account',
+    headerTitle: 'Vérification',
+    icon: ShieldCheck,
+    title: 'Vérifiez Votre Email',
+    description: 'Entrez le code à 6 chiffres envoyé à',
+    buttonText: 'Vérifier le Compte',
   },
   'password-reset': {
-    headerTitle: 'Reset Password',
-    icon: 'lock-reset' as const,
-    title: 'Verify Identity',
-    description: 'Enter the 6-digit code we sent to',
-    buttonText: 'Verify Code',
+    headerTitle: 'Réinitialisation',
+    icon: LockKeyholeUnlocked,
+    title: 'Vérifier l\'Identité',
+    description: 'Entrez le code à 6 chiffres envoyé à',
+    buttonText: 'Vérifier le Code',
   },
 };
 
@@ -91,9 +91,9 @@ export default function VerifyOtpScreen() {
           idToken, data.code, otpExp, email,
         );
         Alert.alert(
-          'Account Verified',
-          response.message || 'Your account has been verified. You can now log in.',
-          [{ text: 'Log In', onPress: () => router.replace('/') }],
+          'Compte Vérifié',
+          response.message || 'Votre compte a été vérifié. Vous pouvez maintenant vous connecter.',
+          [{ text: 'Se Connecter', onPress: () => router.replace('/') }],
         );
       } else if (mode === 'password-reset') {
         // Reset password OTP verification → get reset_token → go to set-new-password
@@ -112,7 +112,7 @@ export default function VerifyOtpScreen() {
         router.replace('/(main)/home');
       }
     } catch (error: any) {
-      Alert.alert('Verification Failed', error.message || 'Invalid or expired OTP.');
+      Alert.alert('Vérification Echouée', error.message || 'Code OTP invalide ou expiré.');
     } finally {
       setIsLoading(false);
     }
@@ -120,8 +120,8 @@ export default function VerifyOtpScreen() {
 
   const handleResend = () => {
     Alert.alert(
-      'Resend OTP',
-      'Please go back and try again to receive a new OTP.',
+      'Renvoyer le Code',
+      'Veuillez revenir en arrière et réessayer pour recevoir un nouveau code OTP.',
       [{ text: 'OK', onPress: () => router.back() }],
     );
   };
@@ -133,15 +133,15 @@ export default function VerifyOtpScreen() {
       <View className="flex-1 items-center px-6">
         {/* Header */}
         <View className="items-center mt-8 mb-10">
-          <View className="p-4 rounded-full bg-primary/10 mb-6">
-            <MaterialCommunityIcons name={config.icon} size={36} color="#2edc6b" />
+          <View className="p-4 rounded-full bg-surface-hover mb-6">
+            <config.icon size={36} color="#8B6F47" />
           </View>
-          <Text className="text-white text-3xl font-manrope-extrabold tracking-tight mb-3 text-center">
+          <Text className="text-foreground text-3xl font-manrope-extrabold tracking-tight mb-3 text-center">
             {config.title}
           </Text>
-          <Text className="text-slate-400 text-base font-manrope text-center leading-relaxed">
+          <Text className="text-muted text-base font-manrope text-center leading-relaxed">
             {config.description}{'\n'}
-            <Text className="font-manrope-semibold text-white">{maskedEmail}</Text>
+            <Text className="font-manrope-semibold text-foreground">{maskedEmail}</Text>
           </Text>
         </View>
 
@@ -167,21 +167,21 @@ export default function VerifyOtpScreen() {
 
         {/* Timer */}
         <View className="items-center gap-4 mb-12">
-          <View className="flex-row items-center gap-6 bg-primary/5 border border-primary/10 px-6 py-3 rounded-2xl">
+          <View className="flex-row items-center gap-6 bg-surface border border-border px-6 py-3 rounded-2xl">
             <View className="items-center">
               <Text className="text-primary text-xl font-manrope-bold">{mins}</Text>
-              <Text className="text-[10px] uppercase tracking-widest text-primary/60 font-manrope-bold">Min</Text>
+              <Text className="text-[10px] uppercase tracking-widest text-muted font-manrope-bold">Min</Text>
             </View>
-            <View className="w-px h-8 bg-primary/20" />
+            <View className="w-px h-8 bg-border" />
             <View className="items-center">
               <Text className="text-primary text-xl font-manrope-bold">{secs}</Text>
-              <Text className="text-[10px] uppercase tracking-widest text-primary/60 font-manrope-bold">Sec</Text>
+              <Text className="text-[10px] uppercase tracking-widest text-muted font-manrope-bold">Sec</Text>
             </View>
           </View>
           <View className="flex-row items-center">
-            <Text className="text-slate-400 text-sm font-manrope">Didn't receive the code? </Text>
+            <Text className="text-muted text-sm font-manrope">Code non reçu ? </Text>
             <Pressable onPress={handleResend} disabled={isLoading}>
-              <Text className="text-primary font-manrope-bold text-sm">Resend</Text>
+              <Text className="text-primary font-manrope-bold text-sm">Renvoyer</Text>
             </Pressable>
           </View>
         </View>

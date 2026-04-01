@@ -1,6 +1,6 @@
 import { Button, Input, ScreenHeader } from '@/components/ui';
 import { AccountsService } from '@/lib/api/accounts';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { WadOfMoney, CameraAdd, InfoCircle, UserCircle } from '@solar-icons/react-native/BoldDuotone';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -18,7 +18,7 @@ export default function CreateAccountScreen() {
   const pickIdentityFile = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'We need access to your photos to upload your identity document.');
+      Alert.alert('Permission requise', 'Nous avons besoin d\'accéder à vos photos pour télécharger votre pièce d\'identité.');
       return;
     }
 
@@ -36,9 +36,9 @@ export default function CreateAccountScreen() {
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!identityUri) newErrors.identity = 'Identity document is required';
+    if (!firstName.trim()) newErrors.firstName = 'Le prénom est requis';
+    if (!lastName.trim()) newErrors.lastName = 'Le nom est requis';
+    if (!identityUri) newErrors.identity = 'La pièce d\'identité est requise';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -50,12 +50,12 @@ export default function CreateAccountScreen() {
       setIsLoading(true);
       const response = await AccountsService.create(firstName.trim(), lastName.trim(), identityUri);
       Alert.alert(
-        'Account Created',
-        response.message || 'Your account has been created and is pending approval.',
+        'Compte Créé',
+        response.message || 'Votre compte a été créé et est en attente d\'approbation.',
         [{ text: 'OK', onPress: () => router.back() }],
       );
     } catch (error: any) {
-      Alert.alert('Creation Failed', error.message || 'An unexpected error occurred.');
+      Alert.alert('Échec de la Création', error.message || 'Une erreur inattendue s\'est produite.');
     } finally {
       setIsLoading(false);
     }
@@ -64,70 +64,70 @@ export default function CreateAccountScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
       <ScrollView className="flex-1" contentContainerClassName="flex-grow" keyboardShouldPersistTaps="handled">
-        <ScreenHeader title="New Account" />
+        <ScreenHeader title="Nouveau Compte" />
 
         <View className="px-6 pt-8 pb-4">
-          <View className="bg-primary/10 p-3 rounded-xl self-start mb-6">
-            <MaterialCommunityIcons name="bank-plus" size={28} color="#2edc6b" />
+          <View className="bg-surface border border-border p-3 rounded-xl self-start mb-6">
+            <WadOfMoney size={28} color="#8B6F47" />
           </View>
-          <Text className="text-white tracking-tight text-3xl font-manrope-extrabold leading-tight mb-3">
-            Open a Bank Account
+          <Text className="text-foreground tracking-tight text-3xl font-manrope-extrabold leading-tight mb-3">
+            Ouvrir un Compte Bancaire
           </Text>
-          <Text className="text-slate-400 text-base font-manrope leading-relaxed">
-            Fill in your details and upload an identity document. Your account will be reviewed and approved by our staff.
+          <Text className="text-muted text-base font-manrope leading-relaxed">
+            Remplissez vos informations et téléchargez une pièce d'identité. Votre compte sera examiné et approuvé par notre équipe.
           </Text>
         </View>
 
         <View className="px-6 py-4 gap-5">
-          {/* First Name */}
+          {/* Prénom */}
           <Input
-            label="First Name"
-            placeholder="Enter your first name"
-            leftIcon="account"
+            label="Prénom"
+            placeholder="Entrez votre prénom"
+            leftIcon={<UserCircle size={22} color="#8C7B6B" />}
             autoCapitalize="words"
             value={firstName}
             onChangeText={(v) => { setFirstName(v); setErrors((p) => ({ ...p, firstName: '' })); }}
             error={errors.firstName}
           />
 
-          {/* Last Name */}
+          {/* Nom */}
           <Input
-            label="Last Name"
-            placeholder="Enter your last name"
-            leftIcon="account"
+            label="Nom"
+            placeholder="Entrez votre nom"
+            leftIcon={<UserCircle size={22} color="#8C7B6B" />}
             autoCapitalize="words"
             value={lastName}
             onChangeText={(v) => { setLastName(v); setErrors((p) => ({ ...p, lastName: '' })); }}
             error={errors.lastName}
           />
 
-          {/* Identity File Upload */}
+          {/* Pièce d'Identité */}
           <View>
-            <Text className="text-xs font-manrope-bold uppercase tracking-widest text-primary/50 mb-2">
-              Identity Document
+            <Text className="text-xs font-manrope-bold uppercase tracking-widest text-muted mb-2">
+              Pièce d'Identité
             </Text>
             <Pressable
-              className={`rounded-2xl border-2 border-dashed p-6 items-center justify-center active:bg-primary/10 ${
-                identityUri ? 'border-primary/30' : errors.identity ? 'border-red-500/30' : 'border-primary/20'
+              className={`rounded-2xl border-2 border-dashed p-6 items-center justify-center active:bg-surface-hover ${
+                identityUri ? 'border-primary/30' : errors.identity ? 'border-red-500/30' : 'border-border'
               }`}
               onPress={pickIdentityFile}
             >
               {identityUri ? (
-                <View className="items-center">
+                <View className="items-center w-full">
                   <Image
                     source={{ uri: identityUri }}
-                    className="w-full h-40 rounded-xl mb-3"
+                    style={{ width: '100%', height: 160, borderRadius: 12 }}
                     resizeMode="cover"
                   />
-                  <Text className="text-primary text-xs font-manrope-semibold">Tap to change</Text>
+                  <Text className="text-primary text-xs font-manrope-semibold mt-3">Appuyez pour changer</Text>
                 </View>
               ) : (
                 <View className="items-center py-4">
-                  <View className="size-14 rounded-full bg-primary/10 items-center justify-center mb-3">
-                    <MaterialCommunityIcons name="camera-plus" size={24} color="#2edc6b" />
+                  <View className="size-14 rounded-full bg-surface-hover items-center justify-center mb-3">
+                    <CameraAdd size={24} color="#8B6F47" />
                   </View>
-                  <Text className="text-white text-sm font-manrope-bold mb-1">Upload Identity Document</Text>
-                  <Text className="text-slate-400 text-xs font-manrope">PNG or JPEG format</Text>
+                  <Text className="text-foreground text-sm font-manrope-bold mb-1">Télécharger la Pièce d'Identité</Text>
+                  <Text className="text-muted text-xs font-manrope">Format PNG ou JPEG</Text>
                 </View>
               )}
             </Pressable>
@@ -136,17 +136,17 @@ export default function CreateAccountScreen() {
             ) : null}
           </View>
 
-          {/* Info Card */}
-          <View className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex-row items-start gap-3">
-            <MaterialCommunityIcons name="information" size={20} color="rgba(46, 220, 107, 0.5)" />
-            <Text className="text-slate-400 text-xs font-manrope flex-1 leading-relaxed">
-              Your account will be pending until approved by our staff. Once approved, you'll receive a unique account number and can start making transactions.
+          {/* Carte d'Information */}
+          <View className="bg-surface rounded-xl p-4 border border-border flex-row items-start gap-3">
+            <InfoCircle size={20} color="#8C7B6B" />
+            <Text className="text-muted text-xs font-manrope flex-1 leading-relaxed">
+              Votre compte restera en attente jusqu'à son approbation par notre équipe. Une fois approuvé, vous recevrez un numéro de compte unique et pourrez effectuer des transactions.
             </Text>
           </View>
 
           <View className="pt-4 pb-8">
             <Button
-              title="Create Account"
+              title="Créer le Compte"
               variant="primary"
               onPress={handleSubmit}
               loading={isLoading}

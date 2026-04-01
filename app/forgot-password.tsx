@@ -1,7 +1,7 @@
 import { Button, Input, ScreenHeader } from '@/components/ui';
 import { AuthService } from '@/lib/api/auth';
 import { RequestPasswordResetInput, requestPasswordResetSchema } from '@/lib/validations/auth';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LockKeyholeUnlocked, Letter } from '@solar-icons/react-native/BoldDuotone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen() {
         },
       });
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'An unexpected error occurred.');
+      Alert.alert('Erreur', error.message || 'Une erreur inattendue est survenue.');
     } finally {
       setIsLoading(false);
     }
@@ -40,18 +40,18 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
-      <ScreenHeader title="Reset Password" />
+      <ScreenHeader title="Réinitialisation" />
 
       <View className="flex-1 px-6">
         <View className="mt-8 mb-10">
-          <View className="bg-primary/10 p-3 rounded-xl self-start mb-6">
-            <MaterialCommunityIcons name="lock-reset" size={28} color="#2edc6b" />
+          <View className="bg-surface-hover p-3 rounded-xl self-start mb-6">
+            <LockKeyholeUnlocked size={28} color="#8B6F47" />
           </View>
-          <Text className="text-white tracking-tight text-3xl font-manrope-extrabold leading-tight mb-3">
-            Forgot Password?
+          <Text className="text-foreground tracking-tight text-3xl font-manrope-extrabold leading-tight mb-3">
+            Mot de passe oublié ?
           </Text>
-          <Text className="text-slate-400 text-base font-manrope leading-relaxed">
-            Enter the email associated with your account and we'll send you a verification code to reset your password.
+          <Text className="text-muted text-base font-manrope leading-relaxed">
+            Entrez l'email associé à votre compte et nous vous enverrons un code de vérification pour réinitialiser votre mot de passe.
           </Text>
         </View>
 
@@ -61,9 +61,9 @@ export default function ForgotPasswordScreen() {
             name="email"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
-                label="Email Address"
-                placeholder="Enter your email"
-                leftIcon="email"
+                label="Adresse Email"
+                placeholder="Entrez votre email"
+                leftIcon={<Letter size={22} color="#8C7B6B" />}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={value}
@@ -76,7 +76,7 @@ export default function ForgotPasswordScreen() {
 
           <View className="pt-4">
             <Button
-              title="Send Verification Code"
+              title="Envoyer le Code"
               variant="primary"
               onPress={handleSubmit(onSubmit)}
               loading={isLoading}
@@ -86,9 +86,9 @@ export default function ForgotPasswordScreen() {
 
         <View className="items-center mt-8">
           <Pressable onPress={() => router.back()} disabled={isLoading}>
-            <Text className="text-slate-400 text-base font-manrope">
-              Remember your password?{' '}
-              <Text className="text-primary font-manrope-bold">Log In</Text>
+            <Text className="text-muted text-base font-manrope">
+              Vous vous souvenez ?{' '}
+              <Text className="text-primary font-manrope-bold">Se Connecter</Text>
             </Text>
           </Pressable>
         </View>

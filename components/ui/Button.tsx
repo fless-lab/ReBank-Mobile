@@ -1,14 +1,11 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
-
-type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+import { ArrowRight } from '@solar-icons/react-native/Linear';
 
 interface ButtonProps {
   title: string;
   onPress?: () => void;
   variant?: 'primary' | 'outline' | 'ghost';
-  icon?: IconName;
   iconComponent?: React.ReactNode;
   loading?: boolean;
   fullWidth?: boolean;
@@ -19,7 +16,6 @@ export function Button({
   title,
   onPress,
   variant = 'primary',
-  icon,
   iconComponent,
   loading = false,
   fullWidth = true,
@@ -29,20 +25,20 @@ export function Button({
 
   const variantClasses = {
     primary: `${baseClasses} bg-primary shadow-lg`,
-    outline: `${baseClasses} border border-primary/20 bg-primary/5`,
+    outline: `${baseClasses} border border-border bg-surface`,
     ghost: `${baseClasses} bg-transparent`,
   };
 
   const textClasses = {
-    primary: 'text-background-dark text-lg font-manrope-bold',
+    primary: 'text-white text-lg font-manrope-bold',
     outline: 'text-primary text-sm font-manrope-semibold',
     ghost: 'text-primary text-sm font-manrope-semibold',
   };
 
   const iconColor = {
-    primary: '#122017',
-    outline: '#2edc6b',
-    ghost: '#2edc6b',
+    primary: '#FFFFFF',
+    outline: '#8B6F47',
+    ghost: '#8B6F47',
   };
 
   return (
@@ -56,12 +52,9 @@ export function Button({
       ) : (
         <>
           {iconComponent}
-          {icon && !iconComponent && (
-            <MaterialCommunityIcons name={icon} size={22} color={iconColor[variant]} />
-          )}
           <Text className={textClasses[variant]}>{title}</Text>
           {variant === 'primary' && (
-            <MaterialCommunityIcons name="arrow-right" size={20} color={iconColor[variant]} />
+            <ArrowRight size={20} color={iconColor[variant]} />
           )}
         </>
       )}

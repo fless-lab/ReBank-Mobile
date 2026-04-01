@@ -8,7 +8,7 @@ interface NavBarProps {
 
 export function NavBar({ children }: NavBarProps) {
   return (
-    <View className="flex-row items-center justify-between px-6 py-4">
+    <View className="flex-row items-center justify-between px-6 py-4 bg-transparent">
       <Logo size="md" />
       {children}
     </View>

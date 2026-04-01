@@ -1,28 +1,31 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Home2, Wallet2, UserCircle, TransferHorizontal } from '@solar-icons/react-native/BoldDuotone';
 
-type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-
-function TabIcon({ name, color, size }: { name: IconName; color: string; size: number }) {
-  return <MaterialCommunityIcons name={name} size={size} color={color} />;
+function TabIcon({ Icon, color, size }: { Icon: React.ComponentType<{size: number; color: string}>; color: string; size: number }) {
+  return <Icon size={size} color={color} />;
 }
 
 export default function MainLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Platform.OS === 'android' ? Math.max(insets.bottom, 12) : insets.bottom;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#122017',
-          borderTopColor: 'rgba(46, 220, 107, 0.1)',
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E8E0D8',
           borderTopWidth: 1,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 70,
+          paddingBottom: bottomPadding,
+          paddingTop: 10,
+          height: 64 + bottomPadding,
         },
-        tabBarActiveTintColor: '#2edc6b',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: '#8B6F47',
+        tabBarInactiveTintColor: '#B5A99D',
         tabBarLabelStyle: {
           fontSize: 10,
           fontFamily: 'Manrope-Bold',
@@ -34,29 +37,29 @@ export default function MainLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <TabIcon name="home" color={color} size={size} />,
+          title: 'Accueil',
+          tabBarIcon: ({ color, size }) => <TabIcon Icon={Home2} color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="accounts"
         options={{
-          title: 'Accounts',
-          tabBarIcon: ({ color, size }) => <TabIcon name="bank" color={color} size={size} />,
+          title: 'Comptes',
+          tabBarIcon: ({ color, size }) => <TabIcon Icon={Wallet2} color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="transfers"
         options={{
-          title: 'Transfers',
-          tabBarIcon: ({ color, size }) => <TabIcon name="swap-horizontal" color={color} size={size} />,
+          title: 'Transferts',
+          tabBarIcon: ({ color, size }) => <TabIcon Icon={TransferHorizontal} color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <TabIcon name="account" color={color} size={size} />,
+          title: 'Profil',
+          tabBarIcon: ({ color, size }) => <TabIcon Icon={UserCircle} color={color} size={size} />,
         }}
       />
     </Tabs>

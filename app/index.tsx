@@ -1,9 +1,10 @@
-import { Button, HeroImage, Input, NavBar } from '@/components/ui';
+import { Button, Input, NavBar } from '@/components/ui';
 import { AuthService } from '@/lib/api/auth';
 import { LoginInput, loginSchema } from '@/lib/validations/auth';
 import { authenticateWithBiometrics } from '@/utils/biometrics';
 import { getTokens } from '@/lib/api/client';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { ShieldKeyhole, ShieldCheck, Lock, Shield, Scanner2 } from '@solar-icons/react-native/BoldDuotone';
+import { Letter } from '@solar-icons/react-native/BoldDuotone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -35,7 +36,7 @@ export default function LoginScreen() {
         },
       });
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'An unexpected error occurred.');
+      Alert.alert('Connexion Echouée', error.message || 'Une erreur inattendue est survenue.');
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +47,7 @@ export default function LoginScreen() {
     try {
       const tokens = await getTokens();
       if (!tokens) {
-        Alert.alert('No Session', 'Please log in with your credentials first to enable biometric login.');
+        Alert.alert('Aucune Session', 'Veuillez d\'abord vous connecter avec vos identifiants pour activer la connexion biométrique.');
         return;
       }
       const success = await authenticateWithBiometrics();
@@ -69,14 +70,15 @@ export default function LoginScreen() {
 
         <View className="flex-1 items-center justify-center px-6 pt-4 pb-8">
           <View className="w-full max-w-[440px]">
-            <HeroImage />
-
-            <View className="items-center mb-8">
-              <Text className="text-white text-[32px] font-manrope-bold tracking-tight mb-2">
-                Welcome back
+            <View className="items-center mb-10">
+              <View className="size-28 rounded-full bg-surface items-center justify-center border-2 border-border mb-6 shadow-sm">
+                <ShieldKeyhole size={52} color="#8B6F47" />
+              </View>
+              <Text className="text-foreground text-[32px] font-manrope-bold tracking-tight mb-2">
+                Bon Retour
               </Text>
-              <Text className="text-primary/70 text-base font-manrope">
-                Securely access your premium account
+              <Text className="text-muted text-base font-manrope">
+                Accédez à votre compte en toute sécurité
               </Text>
             </View>
 
@@ -87,7 +89,7 @@ export default function LoginScreen() {
                 render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <Input
                     label="Email"
-                    placeholder="Enter your email"
+                    placeholder="Entrez votre email"
                     keyboardType="email-address"
                     autoCapitalize="none"
                     rightIcon="email"
@@ -104,10 +106,15 @@ export default function LoginScreen() {
                 name="password"
                 render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <Input
-                    label="Password"
+                    label="Mot de passe"
                     placeholder="••••••••••"
                     secureTextEntry
                     rightIcon="password"
+                    rightAction={
+                      <Pressable onPress={() => router.push('/forgot-password')} disabled={isLoading}>
+                        <Text className="text-primary text-xs font-manrope-bold">Mot de passe oublié ?</Text>
+                      </Pressable>
+                    }
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
@@ -117,16 +124,16 @@ export default function LoginScreen() {
               />
 
               <Button
-                title="Login with Biometrics"
+                title="Connexion Biométrique"
                 variant="outline"
-                icon="fingerprint"
+                iconComponent={<Scanner2 size={22} color="#8B6F47" />}
                 disabled={isLoading}
                 onPress={handleBiometricLogin}
               />
 
               <View className="pt-4">
                 <Button
-                  title="Log In"
+                  title="Se connecter"
                   variant="primary"
                   onPress={handleSubmit(onSubmit)}
                   loading={isLoading}
@@ -135,32 +142,25 @@ export default function LoginScreen() {
             </View>
 
             <View className="items-center mt-8 gap-4">
-              <Pressable onPress={() => router.push('/forgot-password')} disabled={isLoading}>
-                <Text className="text-slate-400 text-sm font-manrope">
-                  Forgot your password?{' '}
-                  <Text className="text-primary font-manrope-bold">Reset</Text>
-                </Text>
-              </Pressable>
-
               <Pressable onPress={() => router.push('/sign-up')} disabled={isLoading}>
-                <Text className="text-primary/40 text-sm font-manrope">
-                  Don't have an account?{' '}
-                  <Text className="text-primary font-manrope-bold">Apply Now</Text>
+                <Text className="text-muted text-base font-manrope">
+                  Pas de compte ?{' '}
+                  <Text className="text-primary font-manrope-bold">S'inscrire</Text>
                 </Text>
               </Pressable>
 
               <View className="flex-row gap-6 pt-4">
-                <MaterialCommunityIcons name="shield-check" size={24} color="rgba(46, 220, 107, 0.3)" />
-                <MaterialCommunityIcons name="lock" size={24} color="rgba(46, 220, 107, 0.3)" />
-                <MaterialCommunityIcons name="security" size={24} color="rgba(46, 220, 107, 0.3)" />
+                <ShieldCheck size={24} color="#B5A99D" />
+                <Lock size={24} color="#B5A99D" />
+                <Shield size={24} color="#B5A99D" />
               </View>
             </View>
           </View>
         </View>
 
         <View className="p-6 items-center">
-          <Text className="text-[10px] uppercase tracking-widest text-primary/30 font-manrope-bold">
-            Encrypted End-to-End Connection
+          <Text className="text-[10px] uppercase tracking-widest text-muted-light font-manrope-bold">
+            Connexion Chiffrée de Bout en Bout
           </Text>
         </View>
       </ScrollView>

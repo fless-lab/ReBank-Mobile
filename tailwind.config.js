@@ -6,11 +6,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#2edc6b",
+        primary: "#8B6F47",
         background: {
-          light: "#f6f8f7",
-          dark: "#122017",
+          light: "#FFFFFF",
+          dark: "#FAF8F5",
         },
+        foreground: "#1E1810",
+        muted: "#8C7B6B",
+        "muted-light": "#B5A99D",
+        surface: "#FFFFFF",
+        "surface-hover": "#F3EDE7",
+        border: "#E8E0D8",
       },
       fontFamily: {
         manrope: ["Manrope"],

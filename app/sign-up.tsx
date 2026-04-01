@@ -1,7 +1,7 @@
 import { Button, Input, ScreenHeader } from '@/components/ui';
 import { AuthService } from '@/lib/api/auth';
 import { SignUpInput, signUpSchema } from '@/lib/validations/auth';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Wallet, Lock, LockKeyhole, Letter } from '@solar-icons/react-native/BoldDuotone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -14,14 +14,24 @@ export default function SignUpScreen() {
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { control, handleSubmit } = useForm<SignUpInput>({
+  const { control, handleSubmit, watch } = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
     defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
+  const password = watch('password');
+
+  const requirements = [
+    { label: 'Min. 10 caractères', met: password.length >= 10 },
+    { label: 'Une lettre majuscule', met: /[A-Z]/.test(password) },
+    { label: 'Une lettre minuscule', met: /[a-z]/.test(password) },
+    { label: 'Un chiffre', met: /[0-9]/.test(password) },
+    { label: 'Un caractère spécial', met: /[\W_]/.test(password) },
+  ];
+
   const onSubmit = async (data: SignUpInput) => {
     if (!agreed) {
-      Alert.alert('Terms of Service', 'You must agree to the Terms of Service and Privacy Policy to create an account.');
+      Alert.alert('Conditions d\'Utilisation', 'Vous devez accepter les Conditions d\'Utilisation et la Politique de Confidentialité pour créer un compte.');
       return;
     }
 
@@ -42,12 +52,12 @@ export default function SignUpScreen() {
       } else {
         Alert.alert(
           'Info',
-          response.message || 'Please check your email.',
+          response.message || 'Veuillez vérifier votre email.',
           [{ text: 'OK', onPress: () => router.replace('/') }],
         );
       }
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'An unexpected error occurred.');
+      Alert.alert('Inscription Echouée', error.message || 'Une erreur inattendue est survenue.');
     } finally {
       setIsLoading(false);
     }
@@ -60,17 +70,17 @@ export default function SignUpScreen() {
         contentContainerClassName="flex-grow"
         keyboardShouldPersistTaps="handled"
       >
-        <ScreenHeader title="Sign Up" />
+        <ScreenHeader title="Inscription" />
 
         <View className="px-6 pt-8 pb-4">
-          <View className="bg-primary/10 p-3 rounded-xl self-start mb-6">
-            <MaterialCommunityIcons name="wallet" size={28} color="#2edc6b" />
+          <View className="bg-surface-hover p-3 rounded-xl self-start mb-6">
+            <Wallet size={28} color="#8B6F47" />
           </View>
-          <Text className="text-white tracking-tight text-4xl font-manrope-extrabold leading-tight mb-3">
-            Join ReBank
+          <Text className="text-foreground tracking-tight text-4xl font-manrope-extrabold leading-tight mb-3">
+            Rejoindre ReBank
           </Text>
-          <Text className="text-slate-400 text-base font-manrope leading-relaxed">
-            Experience premium e-banking with emerald-tier security and seamless global transactions.
+          <Text className="text-muted text-base font-manrope leading-relaxed">
+            Créez votre compte et profitez d'une expérience bancaire premium avec une sécurité renforcée et des transactions mondiales fluides.
           </Text>
         </View>
 
@@ -80,9 +90,9 @@ export default function SignUpScreen() {
             name="email"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
-                label="Email Address"
+                label="Adresse Email"
                 placeholder="michel-dos@gmail.com"
-                leftIcon="email"
+                leftIcon={<Letter size={22} color="#8C7B6B" />}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={value}
@@ -98,9 +108,9 @@ export default function SignUpScreen() {
             name="password"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
-                label="Password"
+                label="Mot de passe"
                 placeholder="••••••••••"
-                leftIcon="lock"
+                leftIcon={<Lock size={22} color="#8C7B6B" />}
                 secureTextEntry
                 rightIcon="password"
                 value={value}
@@ -116,9 +126,9 @@ export default function SignUpScreen() {
             name="confirmPassword"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
-                label="Confirm Password"
+                label="Confirmer le Mot de Passe"
                 placeholder="••••••••••"
-                leftIcon="lock-check"
+                leftIcon={<LockKeyhole size={22} color="#8C7B6B" />}
                 secureTextEntry
                 rightIcon="password"
                 value={value}
@@ -129,14 +139,18 @@ export default function SignUpScreen() {
             )}
           />
 
-          {/* Password requirements info */}
-          <View className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-            <Text className="text-xs font-manrope-bold uppercase tracking-wider text-primary/50 mb-2">
-              Password Requirements
-            </Text>
-            <Text className="text-slate-400 text-xs font-manrope leading-relaxed">
-              Min. 10 characters, with uppercase, lowercase, number, and special character.
-            </Text>
+          {/* Password requirements - live check */}
+          <View className="flex-row flex-wrap gap-x-4 gap-y-2 px-1">
+            {requirements.map((req) => (
+              <View key={req.label} className="flex-row items-center gap-1.5">
+                <View className={`size-4 rounded-full items-center justify-center ${req.met ? 'bg-[#5B8C5A]' : 'border border-border'}`}>
+                  {req.met && <Text style={{fontSize: 8, color: '#FFFFFF', fontWeight: 'bold'}}>&#10003;</Text>}
+                </View>
+                <Text className={`text-xs font-manrope ${req.met ? 'text-[#5B8C5A] font-manrope-bold' : 'text-muted'}`}>
+                  {req.label}
+                </Text>
+              </View>
+            ))}
           </View>
 
           <Pressable
@@ -144,19 +158,19 @@ export default function SignUpScreen() {
             onPress={() => setAgreed(!agreed)}
             disabled={isLoading}
           >
-            <View className={`mt-0.5 size-5 rounded border items-center justify-center ${agreed ? 'bg-primary border-primary' : 'border-primary/30 bg-transparent'}`}>
-              {agreed && <MaterialCommunityIcons name="check" size={14} color="#122017" />}
+            <View className={`mt-0.5 size-5 rounded border items-center justify-center ${agreed ? 'bg-primary border-primary' : 'border-border bg-transparent'}`}>
+              {agreed && <Text style={{fontSize: 10, color: '#1E1810', fontWeight: 'bold'}}>&#10003;</Text>}
             </View>
-            <Text className="text-slate-400 text-sm font-manrope flex-1">
-              I agree to the{' '}
-              <Text className="text-primary">Terms of Service</Text> and{' '}
-              <Text className="text-primary">Privacy Policy</Text>.
+            <Text className="text-muted text-sm font-manrope flex-1">
+              J'accepte les{' '}
+              <Text className="text-primary">Conditions d'Utilisation</Text> et la{' '}
+              <Text className="text-primary">Politique de Confidentialité</Text>.
             </Text>
           </Pressable>
 
           <View className="pt-4">
             <Button
-              title="Create Account"
+              title="Créer un Compte"
               variant="primary"
               onPress={handleSubmit(onSubmit)}
               loading={isLoading}
@@ -165,9 +179,9 @@ export default function SignUpScreen() {
 
           <View className="items-center pt-6 pb-12">
             <Pressable onPress={() => router.back()} disabled={isLoading}>
-              <Text className="text-slate-400 text-base font-manrope">
-                Already have an account?{' '}
-                <Text className="text-primary font-manrope-bold">Log In</Text>
+              <Text className="text-muted text-base font-manrope">
+                Déjà inscrit ?{' '}
+                <Text className="text-primary font-manrope-bold">Se Connecter</Text>
               </Text>
             </Pressable>
           </View>

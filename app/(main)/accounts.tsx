@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AddCircle, Wallet2, WadOfMoney } from '@solar-icons/react-native/BoldDuotone';
+import { ClockCircle } from '@solar-icons/react-native/LineDuotone';
+import { AltArrowRight } from '@solar-icons/react-native/Linear';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { AccountsService } from '@/lib/api/accounts';
@@ -21,7 +23,7 @@ export default function AccountsScreen() {
       const data = await AccountsService.list();
       setAccounts(data);
     } catch (e: any) {
-      setError(e.message || 'Failed to load accounts');
+      setError(e.message || 'Impossible de charger les comptes');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -43,10 +45,12 @@ export default function AccountsScreen() {
     .filter(a => a.approved)
     .reduce((sum, a) => sum + a.balance, 0);
 
+  const activeCount = accounts.filter(a => a.approved).length;
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-background-dark items-center justify-center">
-        <ActivityIndicator size="large" color="#2edc6b" />
+        <ActivityIndicator size="large" color="#8B6F47" />
       </SafeAreaView>
     );
   }
@@ -57,37 +61,37 @@ export default function AccountsScreen() {
         className="flex-1"
         contentContainerClassName="pb-8"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2edc6b" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8B6F47" />
         }
       >
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 py-4">
-          <Text className="text-white text-xl font-manrope-bold tracking-tight">My Accounts</Text>
+          <Text className="text-foreground text-xl font-manrope-bold tracking-tight">Mes Comptes</Text>
           <Pressable
-            className="size-10 rounded-full bg-primary/20 items-center justify-center active:bg-primary/30"
+            className="size-10 rounded-full bg-surface items-center justify-center border border-border active:bg-surface-hover"
             onPress={() => router.push('/account/create' as any)}
           >
-            <MaterialCommunityIcons name="plus" size={22} color="#2edc6b" />
+            <AddCircle size={22} color="#8B6F47" />
           </Pressable>
         </View>
 
         {/* Total Balance */}
-        <View className="mx-6 p-6 rounded-2xl bg-primary/10 border border-primary/20 mb-6">
-          <Text className="text-primary/60 text-xs font-manrope-bold uppercase tracking-widest mb-2">
-            Total Balance
+        <View className="mx-6 p-6 rounded-2xl bg-surface border border-border mb-6">
+          <Text className="text-muted text-xs font-manrope-bold uppercase tracking-widest mb-2">
+            Solde Total
           </Text>
-          <Text className="text-white text-3xl font-manrope-extrabold tracking-tight">
-            {totalBalance.toLocaleString('en-US')} MAD
+          <Text className="text-foreground text-3xl font-manrope-extrabold tracking-tight">
+            {totalBalance.toLocaleString('fr-FR')} MAD
           </Text>
-          <Text className="text-slate-400 text-xs font-manrope mt-1">
-            {accounts.filter(a => a.approved).length} active account{accounts.filter(a => a.approved).length !== 1 ? 's' : ''}
+          <Text className="text-muted text-xs font-manrope mt-1">
+            {activeCount} compte{activeCount !== 1 ? 's' : ''} actif{activeCount !== 1 ? 's' : ''}
           </Text>
         </View>
 
         {/* Error */}
         {error ? (
-          <View className="mx-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 mb-4">
-            <Text className="text-red-400 text-sm font-manrope">{error}</Text>
+          <View className="mx-6 p-4 rounded-xl bg-[#C9544D]/10 border border-[#C9544D]/20 mb-4">
+            <Text className="text-[#C9544D] text-sm font-manrope">{error}</Text>
           </View>
         ) : null}
 
@@ -95,42 +99,38 @@ export default function AccountsScreen() {
         <View className="px-6 gap-3">
           {accounts.length === 0 ? (
             <View className="items-center py-16">
-              <View className="size-20 rounded-full bg-primary/10 items-center justify-center mb-4">
-                <MaterialCommunityIcons name="bank-plus" size={36} color="rgba(46, 220, 107, 0.4)" />
+              <View className="size-20 rounded-full bg-surface border border-border items-center justify-center mb-4">
+                <WadOfMoney size={36} color="#8C7B6B" />
               </View>
-              <Text className="text-white text-lg font-manrope-bold mb-2">No accounts yet</Text>
-              <Text className="text-slate-400 text-sm font-manrope text-center mb-6">
-                Create your first bank account to get started
+              <Text className="text-foreground text-lg font-manrope-bold mb-2">Aucun compte</Text>
+              <Text className="text-muted text-sm font-manrope text-center mb-6">
+                Créez votre premier compte bancaire pour commencer
               </Text>
               <Pressable
                 className="bg-primary px-6 py-3 rounded-xl active:bg-primary/80"
                 onPress={() => router.push('/account/create' as any)}
               >
-                <Text className="text-background-dark font-manrope-bold text-sm">Create Account</Text>
+                <Text className="text-white font-manrope-bold text-sm">Créer un Compte</Text>
               </Pressable>
             </View>
           ) : (
             accounts.map((account) => (
               <Pressable
                 key={account.id}
-                className="bg-primary/5 rounded-2xl border border-primary/10 p-5 active:bg-primary/10"
+                className="bg-surface rounded-2xl border border-border p-5 active:bg-surface-hover"
                 onPress={() => router.push({ pathname: '/account/[id]' as any, params: { id: account.id } })}
               >
                 <View className="flex-row items-start justify-between mb-3">
                   <View className="flex-row items-center gap-3">
-                    <View className={`size-10 rounded-xl items-center justify-center ${account.approved ? 'bg-primary/20' : 'bg-yellow-500/20'}`}>
-                      <MaterialCommunityIcons
-                        name={account.approved ? 'bank' : 'clock-outline'}
-                        size={20}
-                        color={account.approved ? '#2edc6b' : '#eab308'}
-                      />
+                    <View className={`size-10 rounded-xl items-center justify-center ${account.approved ? 'bg-[#5B8C5A]/20' : 'bg-[#D4A534]/20'}`}>
+                      {account.approved ? <Wallet2 size={20} color="#5B8C5A" /> : <ClockCircle size={20} color="#D4A534" />}
                     </View>
                     <View>
-                      <Text className="text-white text-sm font-manrope-bold">
+                      <Text className="text-foreground text-sm font-manrope-bold">
                         {account.first_name} {account.last_name}
                       </Text>
                       {account.numero ? (
-                        <Text className="text-slate-500 text-xs font-manrope">
+                        <Text className="text-muted text-xs font-manrope">
                           N° {account.numero}
                         </Text>
                       ) : null}
@@ -138,9 +138,9 @@ export default function AccountsScreen() {
                   </View>
 
                   {/* Status Badge */}
-                  <View className={`px-2.5 py-1 rounded-full ${account.approved ? 'bg-primary/10' : 'bg-yellow-500/10'}`}>
-                    <Text className={`text-[10px] font-manrope-bold uppercase ${account.approved ? 'text-primary' : 'text-yellow-400'}`}>
-                      {account.approved ? 'Active' : 'Pending'}
+                  <View className={`px-2.5 py-1 rounded-full ${account.approved ? 'bg-[#5B8C5A]/10' : 'bg-[#D4A534]/10'}`}>
+                    <Text className={`text-[10px] font-manrope-bold uppercase ${account.approved ? 'text-[#5B8C5A]' : 'text-[#D4A534]'}`}>
+                      {account.approved ? 'Actif' : 'En attente'}
                     </Text>
                   </View>
                 </View>
@@ -148,16 +148,16 @@ export default function AccountsScreen() {
                 {account.approved ? (
                   <View className="flex-row items-end justify-between">
                     <View>
-                      <Text className="text-slate-500 text-[10px] font-manrope-bold uppercase tracking-widest">Balance</Text>
-                      <Text className="text-white text-xl font-manrope-bold">
-                        {account.balance.toLocaleString('en-US')} MAD
+                      <Text className="text-muted text-[10px] font-manrope-bold uppercase tracking-widest">Solde</Text>
+                      <Text className="text-foreground text-xl font-manrope-bold">
+                        {account.balance.toLocaleString('fr-FR')} MAD
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color="#94a3b8" />
+                    <AltArrowRight size={20} color="#8C7B6B" />
                   </View>
                 ) : (
-                  <Text className="text-slate-400 text-xs font-manrope">
-                    Awaiting staff approval
+                  <Text className="text-muted text-xs font-manrope">
+                    En attente d'approbation
                   </Text>
                 )}
               </Pressable>

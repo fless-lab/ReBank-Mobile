@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AltArrowLeft } from '@solar-icons/react-native/Linear';
 import { useRouter } from 'expo-router';
 
 interface ScreenHeaderProps {
@@ -14,12 +14,12 @@ export function ScreenHeader({ title, onBack }: ScreenHeaderProps) {
   return (
     <View className="flex-row items-center px-4 py-3 justify-between">
       <Pressable
-        className="size-12 items-center justify-center rounded-full active:bg-primary/10"
+        className="size-12 items-center justify-center rounded-full active:bg-surface-hover"
         onPress={onBack ?? (() => router.back())}
       >
-        <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+        <AltArrowLeft size={24} color="#1E1810" />
       </Pressable>
-      <Text className="text-white text-lg font-manrope-bold tracking-tight flex-1 text-center pr-12">
+      <Text className="text-foreground text-lg font-manrope-bold tracking-tight flex-1 text-center pr-12">
         {title}
       </Text>
     </View>

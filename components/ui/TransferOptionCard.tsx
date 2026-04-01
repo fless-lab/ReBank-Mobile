@@ -1,11 +1,9 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+import { AltArrowRight } from '@solar-icons/react-native/Linear';
 
 interface TransferOptionCardProps {
-  icon: IconName;
+  icon: React.ReactNode;
   title: string;
   subtitle: string;
   onPress?: () => void;
@@ -14,16 +12,17 @@ interface TransferOptionCardProps {
 export function TransferOptionCard({ icon, title, subtitle, onPress }: TransferOptionCardProps) {
   return (
     <Pressable
-      className="flex-col justify-between rounded-xl border border-primary/20 bg-primary/10 p-5 active:bg-primary/20 h-[140px]"
+      className="flex-row items-center rounded-2xl border border-border bg-surface p-5 active:bg-surface-hover gap-4"
       onPress={onPress}
     >
-      <View className="bg-primary/20 size-10 rounded-lg items-center justify-center">
-        <MaterialCommunityIcons name={icon} size={24} color="#2edc6b" />
+      <View className="bg-surface-hover size-14 rounded-xl items-center justify-center">
+        {icon}
       </View>
-      <View className="gap-1">
-        <Text className="text-white text-sm font-manrope-bold leading-tight" numberOfLines={2}>{title}</Text>
-        <Text className="text-slate-400 text-xs font-manrope-medium" numberOfLines={1}>{subtitle}</Text>
+      <View className="flex-1 gap-1">
+        <Text className="text-foreground text-base font-manrope-bold">{title}</Text>
+        <Text className="text-muted text-sm font-manrope">{subtitle}</Text>
       </View>
+      <AltArrowRight size={22} color="#B5A99D" />
     </Pressable>
   );
 }

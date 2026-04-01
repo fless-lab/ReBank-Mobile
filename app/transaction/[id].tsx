@@ -1,22 +1,28 @@
 import { ScreenHeader } from '@/components/ui';
 import { TransactionsService } from '@/lib/api/transactions';
 import { Transaction } from '@/lib/types/api';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { WadOfMoney, CashOut, CardTransfer, DangerCircle } from '@solar-icons/react-native/BoldDuotone';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const TX_TYPE_CONFIG = {
-  DEPOSIT: { icon: 'cash-plus' as const, color: '#2edc6b', label: 'Deposit' },
-  WITHDRAWAL: { icon: 'cash-minus' as const, color: '#ef4444', label: 'Withdrawal' },
-  TRANSFER: { icon: 'bank-transfer' as const, color: '#818cf8', label: 'Transfer' },
+  DEPOSIT: { Icon: WadOfMoney, color: '#5B8C5A', label: 'Dépôt' },
+  WITHDRAWAL: { Icon: CashOut, color: '#C9544D', label: 'Retrait' },
+  TRANSFER: { Icon: CardTransfer, color: '#8B6F47', label: 'Virement' },
 };
 
-const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  COMPLETED: { bg: 'bg-primary/10', text: 'text-primary' },
-  PENDING: { bg: 'bg-yellow-500/10', text: 'text-yellow-400' },
-  FAILED: { bg: 'bg-red-500/10', text: 'text-red-400' },
+const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  COMPLETED: { bg: 'bg-[#5B8C5A]/10', text: 'text-[#5B8C5A]', label: 'Terminé' },
+  PENDING: { bg: 'bg-[#D4A534]/10', text: 'text-[#D4A534]', label: 'En attente' },
+  FAILED: { bg: 'bg-[#C9544D]/10', text: 'text-[#C9544D]', label: 'Échoué' },
+};
+
+const TX_TYPE_LABELS: Record<string, string> = {
+  DEPOSIT: 'Dépôt',
+  WITHDRAWAL: 'Retrait',
+  TRANSFER: 'Virement',
 };
 
 export default function TransactionDetailScreen() {
@@ -35,7 +41,7 @@ export default function TransactionDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-background-dark justify-center items-center">
-        <ActivityIndicator size="large" color="#2edc6b" />
+        <ActivityIndicator size="large" color="#8B6F47" />
       </SafeAreaView>
     );
   }
@@ -43,10 +49,10 @@ export default function TransactionDetailScreen() {
   if (!tx) {
     return (
       <SafeAreaView className="flex-1 bg-background-dark">
-        <ScreenHeader title="Details" />
+        <ScreenHeader title="Détails" />
         <View className="flex-1 items-center justify-center px-6">
-          <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#94a3b8" />
-          <Text className="text-white mt-4 font-manrope-bold">Transaction not found</Text>
+          <DangerCircle size={48} color="#8C7B6B" />
+          <Text className="text-foreground mt-4 font-manrope-bold">Transaction introuvable</Text>
         </View>
       </SafeAreaView>
     );
@@ -58,45 +64,45 @@ export default function TransactionDetailScreen() {
 
   let title = config.label;
   if (tx.transaction_type === 'TRANSFER' && tx.destination_account) {
-    title = `Transfer to ${tx.destination_account.first_name} ${tx.destination_account.last_name}`;
+    title = `Virement vers ${tx.destination_account.first_name} ${tx.destination_account.last_name}`;
   }
 
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
-      <ScreenHeader title="Transaction Details" />
+      <ScreenHeader title="Détails de la Transaction" />
       <ScrollView className="flex-1 px-6 pt-6">
         {/* Hero */}
         <View className="items-center mb-8">
-          <View className="size-20 rounded-full bg-slate-800 items-center justify-center mb-4">
-            <MaterialCommunityIcons name={config.icon} size={40} color={config.color} />
+          <View className="size-20 rounded-full bg-surface-hover items-center justify-center mb-4">
+            <config.Icon size={40} color={config.color} />
           </View>
-          <Text className="text-white text-2xl font-manrope-bold tracking-tight mb-1">{title}</Text>
+          <Text className="text-foreground text-2xl font-manrope-bold tracking-tight mb-1">{title}</Text>
 
           {/* Type Badge */}
-          <View className="px-3 py-1 rounded-full mt-1 mb-3 bg-primary/10">
-            <Text className="text-xs font-manrope-bold uppercase text-primary">{tx.transaction_type}</Text>
+          <View className="px-3 py-1 rounded-full mt-1 mb-3 bg-surface-hover">
+            <Text className="text-xs font-manrope-bold uppercase text-primary">{TX_TYPE_LABELS[tx.transaction_type] || tx.transaction_type}</Text>
           </View>
 
-          <Text className={`text-4xl font-manrope-bold ${isDeposit ? 'text-primary' : 'text-white'}`}>
-            {isDeposit ? '+' : '-'}{tx.amount.toLocaleString('en-US')} MAD
+          <Text className={`text-4xl font-manrope-bold ${isDeposit ? 'text-[#5B8C5A]' : 'text-foreground'}`}>
+            {isDeposit ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} MAD
           </Text>
         </View>
 
-        {/* Details Card */}
-        <View className="bg-primary/5 rounded-2xl p-4 border border-primary/10 mb-6">
-          <DetailRow label="Date" value={new Date(tx.created_at).toLocaleString()} />
+        {/* Carte de Détails */}
+        <View className="bg-surface rounded-2xl p-4 border border-border mb-6">
+          <DetailRow label="Date" value={new Date(tx.created_at).toLocaleString('fr-FR')} />
           <DetailRow
-            label="Status"
-            value={tx.status.charAt(0) + tx.status.slice(1).toLowerCase()}
+            label="Statut"
+            value={statusStyle.label}
             valueClassName={statusStyle.text}
           />
-          <DetailRow label="Reference" value={tx.reference} />
-          <DetailRow label="Balance After" value={`${tx.balance_after.toLocaleString()} MAD`} />
+          <DetailRow label="Référence" value={tx.reference} />
+          <DetailRow label="Solde Après" value={`${tx.balance_after.toLocaleString('fr-FR')} MAD`} />
           {tx.source_account ? (
-            <DetailRow label="From" value={`${tx.source_account.first_name} ${tx.source_account.last_name} (${tx.source_account.numero})`} />
+            <DetailRow label="Compte Source" value={`${tx.source_account.first_name} ${tx.source_account.last_name} (${tx.source_account.numero})`} />
           ) : null}
           {tx.destination_account ? (
-            <DetailRow label="To" value={`${tx.destination_account.first_name} ${tx.destination_account.last_name} (${tx.destination_account.numero})`} />
+            <DetailRow label="Compte Destination" value={`${tx.destination_account.first_name} ${tx.destination_account.last_name} (${tx.destination_account.numero})`} />
           ) : null}
           {tx.description ? (
             <DetailRow label="Description" value={tx.description} isLast />
@@ -111,9 +117,9 @@ function DetailRow({ label, value, valueClassName, isLast }: {
   label: string; value: string; valueClassName?: string; isLast?: boolean;
 }) {
   return (
-    <View className={`flex-row justify-between py-3 ${!isLast ? 'border-b border-primary/10' : ''}`}>
-      <Text className="text-slate-500 text-sm font-manrope">{label}</Text>
-      <Text className={`text-sm font-manrope-semibold ${valueClassName || 'text-white'} max-w-[60%] text-right`}>{value}</Text>
+    <View className={`flex-row justify-between py-3 ${!isLast ? 'border-b border-border' : ''}`}>
+      <Text className="text-muted text-sm font-manrope">{label}</Text>
+      <Text className={`text-sm font-manrope-semibold ${valueClassName || 'text-foreground'} max-w-[60%] text-right`}>{value}</Text>
     </View>
   );
 }

@@ -1,5 +1,12 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoginOtpResponse, LoginResponse, MessageResponse, RegisterResponse, ResetPasswordResponse, ResetPasswordOtpResponse } from '../types/api';
 import { api, clearTokens, saveTokens } from './client';
+
+const USER_EMAIL_KEY = '@rebank_user_email';
+
+export async function getUserEmail(): Promise<string | null> {
+  return AsyncStorage.getItem(USER_EMAIL_KEY);
+}
 
 export const AuthService = {
   /**
@@ -27,6 +34,7 @@ export const AuthService = {
       false,
     );
     await saveTokens(tokens);
+    await AsyncStorage.setItem(USER_EMAIL_KEY, email);
     return tokens;
   },
 
@@ -116,5 +124,6 @@ export const AuthService = {
       // If logout API fails (expired token, etc.), still clear local tokens
     }
     await clearTokens();
+    await AsyncStorage.removeItem(USER_EMAIL_KEY);
   },
 };
