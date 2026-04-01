@@ -1,21 +1,20 @@
-import { Button, Input, ScreenHeader } from '@/components/ui';
+import { Button, ScreenHeader } from '@/components/ui';
 import { AccountsService } from '@/lib/api/accounts';
 import { TransactionsService } from '@/lib/api/transactions';
 import { BankAccount } from '@/lib/types/api';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function TransferScreen() {
+export default function DepositScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ sourceAccountId?: string }>();
+  const params = useLocalSearchParams<{ accountId?: string }>();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(
-    params.sourceAccountId ? Number(params.sourceAccountId) : null
+    params.accountId ? Number(params.accountId) : null
   );
-  const [destinationNumero, setDestinationNumero] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -34,15 +33,9 @@ export default function TransferScreen() {
     });
   }, []);
 
-  const selectedAccount = accounts.find((a) => a.id === selectedId);
-
-  const handleTransfer = async () => {
+  const handleDeposit = async () => {
     if (!selectedId) {
-      Alert.alert('Error', 'Please select a source account.');
-      return;
-    }
-    if (!destinationNumero.trim()) {
-      Alert.alert('Error', 'Please enter the destination account number.');
+      Alert.alert('Error', 'Please select an account.');
       return;
     }
     const num = parseInt(amount, 10);
@@ -50,25 +43,21 @@ export default function TransferScreen() {
       Alert.alert('Invalid Amount', 'Please enter a valid positive amount.');
       return;
     }
-    if (selectedAccount && num > selectedAccount.balance) {
-      Alert.alert('Insufficient Funds', 'You do not have enough balance for this transfer.');
-      return;
-    }
-
     setLoading(true);
     try {
-      await TransactionsService.transfer(selectedId, destinationNumero.trim(), num);
+      await TransactionsService.deposit(selectedId, num);
+      const account = accounts.find((a) => a.id === selectedId);
       router.push({
         pathname: '/transfer/success' as any,
         params: {
           amount: String(num),
-          name: `Account ${destinationNumero}`,
-          txId: `TRF-${Date.now()}`,
-          type: 'friend',
+          name: account ? `${account.first_name} ${account.last_name}` : 'Account',
+          txId: `DEP-${Date.now()}`,
+          type: 'deposit',
         },
       });
     } catch (e: any) {
-      Alert.alert('Transfer Failed', e.message);
+      Alert.alert('Deposit Failed', e.message);
     } finally {
       setLoading(false);
     }
@@ -85,12 +74,12 @@ export default function TransferScreen() {
   if (accounts.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-background-dark">
-        <ScreenHeader title="Transfer" />
+        <ScreenHeader title="Deposit" />
         <View className="flex-1 items-center justify-center px-6">
           <MaterialCommunityIcons name="bank-off" size={48} color="#94a3b8" />
           <Text className="text-white text-lg font-manrope-bold mt-4">No approved accounts</Text>
           <Text className="text-slate-400 text-sm font-manrope mt-2 text-center">
-            You need an approved account to make transfers.
+            You need an approved account to make a deposit.
           </Text>
         </View>
       </SafeAreaView>
@@ -99,11 +88,11 @@ export default function TransferScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background-dark">
-      <ScreenHeader title="Transfer" />
-      <ScrollView className="flex-1" contentContainerClassName="px-6 pt-6 pb-8" keyboardShouldPersistTaps="handled">
-        {/* Source Account */}
+      <ScreenHeader title="Deposit" />
+      <View className="flex-1 px-6 pt-6">
+        {/* Select Account */}
         <Text className="text-slate-400 text-xs font-manrope-bold uppercase tracking-widest mb-2">
-          From Account
+          Select Account
         </Text>
         <View className="bg-primary/5 rounded-2xl border border-primary/10 mb-6 overflow-hidden">
           {accounts.map((acc, idx) => (
@@ -126,25 +115,9 @@ export default function TransferScreen() {
           ))}
         </View>
 
-        {/* Destination Account Number */}
-        <Text className="text-slate-400 text-xs font-manrope-bold uppercase tracking-widest mb-2">
-          Destination Account Number
-        </Text>
-        <View className="flex-row items-center bg-primary/5 rounded-xl border border-primary/10 px-4 h-14 mb-6">
-          <MaterialCommunityIcons name="bank" size={20} color="rgba(46, 220, 107, 0.4)" />
-          <TextInput
-            className="flex-1 text-white text-sm font-manrope ml-3"
-            placeholder="Enter account number"
-            placeholderTextColor="rgba(255,255,255,0.2)"
-            value={destinationNumero}
-            onChangeText={setDestinationNumero}
-            keyboardType="number-pad"
-          />
-        </View>
-
         {/* Amount */}
         <Text className="text-slate-400 text-xs font-manrope-bold uppercase tracking-widest mb-2">Amount</Text>
-        <View className="flex-row items-center bg-primary/5 rounded-xl border border-primary/10 px-4 h-14 mb-4">
+        <View className="flex-row items-center bg-primary/5 rounded-xl border border-primary/10 px-4 h-14 mb-8">
           <Text className="text-primary text-xl font-manrope-bold mr-2">MAD</Text>
           <TextInput
             className="flex-1 text-white text-xl font-manrope-bold"
@@ -156,24 +129,14 @@ export default function TransferScreen() {
           />
         </View>
 
-        {/* Available Balance */}
-        {selectedAccount ? (
-          <View className="bg-primary/5 rounded-xl p-3 border border-primary/10 mb-8 flex-row items-center gap-2">
-            <MaterialCommunityIcons name="information" size={16} color="rgba(46, 220, 107, 0.5)" />
-            <Text className="text-slate-400 text-xs font-manrope">
-              Available: <Text className="text-white font-manrope-bold">{selectedAccount.balance.toLocaleString()} MAD</Text>
-            </Text>
-          </View>
-        ) : null}
-
         <Button
-          title="Send Transfer"
+          title="Deposit"
           variant="primary"
-          onPress={handleTransfer}
+          onPress={handleDeposit}
           loading={loading}
-          disabled={!amount || !destinationNumero.trim() || parseInt(amount, 10) <= 0}
+          disabled={!amount || parseInt(amount, 10) <= 0}
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

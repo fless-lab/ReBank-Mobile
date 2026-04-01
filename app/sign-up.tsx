@@ -16,12 +16,7 @@ export default function SignUpScreen() {
 
   const { control, handleSubmit } = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      fullName: '',
-      email: '',
-      phone: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
   const onSubmit = async (data: SignUpInput) => {
@@ -32,8 +27,25 @@ export default function SignUpScreen() {
 
     try {
       setIsLoading(true);
-      await AuthService.register(data);
-      router.push({ pathname: '/verify-otp', params: { mode: 'account-verify' } });
+      const response = await AuthService.register(data.email, data.password);
+      if (response.id_token && response.otp_exp) {
+        // Navigate to OTP verification
+        router.push({
+          pathname: '/verify-otp',
+          params: {
+            mode: 'account-verify',
+            email: data.email,
+            id_token: response.id_token,
+            otp_exp: String(response.otp_exp),
+          },
+        });
+      } else {
+        Alert.alert(
+          'Info',
+          response.message || 'Please check your email.',
+          [{ text: 'OK', onPress: () => router.replace('/') }],
+        );
+      }
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'An unexpected error occurred.');
     } finally {
@@ -65,23 +77,6 @@ export default function SignUpScreen() {
         <View className="px-6 py-4 gap-4">
           <Controller
             control={control}
-            name="fullName"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <Input
-                label="Full Name"
-                placeholder="Michel Dos"
-                leftIcon="account"
-                autoCapitalize="words"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={error?.message}
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
             name="email"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
@@ -100,28 +95,11 @@ export default function SignUpScreen() {
 
           <Controller
             control={control}
-            name="phone"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <Input
-                label="Phone Number"
-                placeholder="+212 (xxx) 000-0000"
-                leftIcon="phone"
-                keyboardType="phone-pad"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={error?.message}
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
             name="password"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
                 label="Password"
-                placeholder="••••••••"
+                placeholder="••••••••••"
                 leftIcon="lock"
                 secureTextEntry
                 rightIcon="password"
@@ -132,6 +110,34 @@ export default function SignUpScreen() {
               />
             )}
           />
+
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <Input
+                label="Confirm Password"
+                placeholder="••••••••••"
+                leftIcon="lock-check"
+                secureTextEntry
+                rightIcon="password"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={error?.message}
+              />
+            )}
+          />
+
+          {/* Password requirements info */}
+          <View className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+            <Text className="text-xs font-manrope-bold uppercase tracking-wider text-primary/50 mb-2">
+              Password Requirements
+            </Text>
+            <Text className="text-slate-400 text-xs font-manrope leading-relaxed">
+              Min. 10 characters, with uppercase, lowercase, number, and special character.
+            </Text>
+          </View>
 
           <Pressable
             className="flex-row items-start gap-3 py-2"

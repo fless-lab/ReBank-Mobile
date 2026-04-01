@@ -9,43 +9,57 @@ import { Controller, useForm } from 'react-hook-form';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type OtpMode = 'password-reset' | 'account-verify' | '2fa-login';
+type OtpMode = 'account-verify' | '2fa-login' | 'password-reset';
 
 const CONFIG = {
-  'password-reset': {
-    headerTitle: 'Security',
-    icon: 'lock-reset' as const,
-    title: 'Password Reset Code',
-    description: 'Enter the 6-digit code we sent to your email to reset your password',
-    buttonText: 'Verify & Reset Password',
-    canSkip: false,
+  '2fa-login': {
+    headerTitle: 'Verification',
+    icon: 'cellphone-key' as const,
+    title: 'Two-Factor Auth',
+    description: 'Enter the 6-digit code we sent to',
+    buttonText: 'Verify & Login',
   },
   'account-verify': {
     headerTitle: 'Verification',
     icon: 'shield-check' as const,
-    title: 'Account Verification',
-    description: 'We sent a verification code to confirm your email address',
+    title: 'Verify Your Email',
+    description: 'Enter the 6-digit code we sent to',
     buttonText: 'Verify Account',
-    canSkip: true,
   },
-  '2fa-login': {
-    headerTitle: '2FA Login',
-    icon: 'cellphone-key' as const,
-    title: 'Two-Factor Auth',
-    description: 'Enter the 6-digit code from your authenticator app to complete the login.',
-    buttonText: 'Verify & Login',
-    canSkip: false,
+  'password-reset': {
+    headerTitle: 'Reset Password',
+    icon: 'lock-reset' as const,
+    title: 'Verify Identity',
+    description: 'Enter the 6-digit code we sent to',
+    buttonText: 'Verify Code',
   },
 };
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string; email?: string }>();
-  const mode: OtpMode = (params.mode as OtpMode) || 'password-reset';
-  const email = params.email || 'r****@example.com';
+  const params = useLocalSearchParams<{
+    mode?: string;
+    email?: string;
+    id_token?: string;
+    otp_exp?: string;
+  }>();
+
+  const mode: OtpMode = (params.mode as OtpMode) || '2fa-login';
+  const email = params.email || '';
+  const idToken = params.id_token || '';
+  const otpExp = parseFloat(params.otp_exp || '0');
   const config = CONFIG[mode];
 
-  const [seconds, setSeconds] = useState(119);
+  // Calculate initial seconds from OTP expiry (6 min from backend)
+  const getInitialSeconds = () => {
+    if (otpExp > 0) {
+      const remaining = Math.floor(otpExp - Date.now() / 1000);
+      return Math.max(0, Math.min(remaining, 360));
+    }
+    return 360;
+  };
+
+  const [seconds, setSeconds] = useState(getInitialSeconds);
   const [isLoading, setIsLoading] = useState(false);
 
   const { control, handleSubmit } = useForm<VerifyOtpInput>({
@@ -62,25 +76,54 @@ export default function VerifyOtpScreen() {
   const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
   const secs = (seconds % 60).toString().padStart(2, '0');
 
+  // Mask email for display
+  const maskedEmail = email
+    ? email.replace(/(.{2})(.*)(@.*)/, '$1***$3')
+    : '***@***.com';
+
   const onSubmit = async (data: VerifyOtpInput) => {
     try {
       setIsLoading(true);
-      const res = await AuthService.verifyOtp(data, mode);
 
-      if (mode === 'password-reset') {
-        router.push({ pathname: '/set-new-password', params: { token: res.token } });
+      if (mode === 'account-verify') {
+        // Registration OTP verification
+        const response = await AuthService.verifyRegistrationOtp(
+          idToken, data.code, otpExp, email,
+        );
+        Alert.alert(
+          'Account Verified',
+          response.message || 'Your account has been verified. You can now log in.',
+          [{ text: 'Log In', onPress: () => router.replace('/') }],
+        );
+      } else if (mode === 'password-reset') {
+        // Reset password OTP verification → get reset_token → go to set-new-password
+        const response = await AuthService.verifyResetOtp(idToken, data.code, otpExp, email);
+        router.replace({
+          pathname: '/set-new-password',
+          params: {
+            email,
+            reset_token: response.reset_token,
+            reset_exp: String(response.reset_exp),
+          },
+        });
       } else {
+        // Login OTP verification
+        await AuthService.verifyLoginOtp(idToken, data.code, otpExp, email);
         router.replace('/(main)/home');
       }
     } catch (error: any) {
-      Alert.alert('Verification Failed', error.message || 'An unexpected error occurred.');
+      Alert.alert('Verification Failed', error.message || 'Invalid or expired OTP.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSkip = () => {
-    router.replace('/(main)/home');
+  const handleResend = () => {
+    Alert.alert(
+      'Resend OTP',
+      'Please go back and try again to receive a new OTP.',
+      [{ text: 'OK', onPress: () => router.back() }],
+    );
   };
 
   return (
@@ -98,7 +141,7 @@ export default function VerifyOtpScreen() {
           </Text>
           <Text className="text-slate-400 text-base font-manrope text-center leading-relaxed">
             {config.description}{'\n'}
-            <Text className="font-manrope-semibold text-white">{email}</Text>
+            <Text className="font-manrope-semibold text-white">{maskedEmail}</Text>
           </Text>
         </View>
 
@@ -137,13 +180,13 @@ export default function VerifyOtpScreen() {
           </View>
           <View className="flex-row items-center">
             <Text className="text-slate-400 text-sm font-manrope">Didn't receive the code? </Text>
-            <Pressable onPress={() => setSeconds(119)} disabled={isLoading}>
+            <Pressable onPress={handleResend} disabled={isLoading}>
               <Text className="text-primary font-manrope-bold text-sm">Resend</Text>
             </Pressable>
           </View>
         </View>
 
-        {/* Action Buttons */}
+        {/* Action Button */}
         <View className="w-full gap-3 mb-8">
           <Button
             title={config.buttonText}
@@ -151,16 +194,6 @@ export default function VerifyOtpScreen() {
             onPress={handleSubmit(onSubmit)}
             loading={isLoading}
           />
-          {config.canSkip && (
-            <Pressable
-              className="flex-row items-center justify-center gap-2 py-3 disabled:opacity-50"
-              onPress={handleSkip}
-              disabled={isLoading}
-            >
-              <Text className="text-primary/50 text-sm font-manrope-semibold">Skip for now</Text>
-              <MaterialCommunityIcons name="arrow-right" size={16} color="rgba(46, 220, 107, 0.5)" />
-            </Pressable>
-          )}
         </View>
       </View>
     </SafeAreaView>

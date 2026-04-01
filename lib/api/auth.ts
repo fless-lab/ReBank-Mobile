@@ -1,72 +1,120 @@
-import { createDefaultProfile, UserProfile } from '@/utils/userStore';
-import {
-    LoginInput,
-    RequestPasswordResetInput,
-    SetNewPasswordInput,
-    SignUpInput,
-    VerifyOtpInput
-} from '../validations/auth';
-import { ApiError, mockCall } from './client';
-
-export interface AuthResponse {
-    token: string;
-    user: UserProfile;
-    requires2FA?: boolean;
-}
+import { LoginOtpResponse, LoginResponse, MessageResponse, RegisterResponse, ResetPasswordResponse, ResetPasswordOtpResponse } from '../types/api';
+import { api, clearTokens, saveTokens } from './client';
 
 export const AuthService = {
-    async login(data: LoginInput): Promise<AuthResponse> {
-        await mockCall(null);
+  /**
+   * Step 1: Login with email + password.
+   * Backend always sends an OTP to the user's email.
+   * Returns id_token and otp_exp needed for step 2.
+   */
+  async login(email: string, password: string): Promise<LoginResponse> {
+    return api.post<LoginResponse>('/api/auth/login', { email, password }, false);
+  },
 
-        if (data.identifier === 'maximus@rebank.com' || data.identifier === 'iam-raouf@rebank.com') {
-            if (data.password === '12345678') {
-                throw { message: 'Invalid credentials. Please try again.', status: 401 } as ApiError;
-            }
-        }
+  /**
+   * Step 2: Verify OTP to complete login.
+   * Returns JWT access and refresh tokens.
+   */
+  async verifyLoginOtp(
+    id_token: string,
+    otp: string,
+    otp_exp: number,
+    email: string,
+  ): Promise<LoginOtpResponse> {
+    const tokens = await api.post<LoginOtpResponse>(
+      '/api/auth/login/otp',
+      { id_token, otp, otp_exp, email },
+      false,
+    );
+    await saveTokens(tokens);
+    return tokens;
+  },
 
-        const { getUserProfile } = await import('@/utils/userStore');
-        const user = await getUserProfile();
+  /**
+   * Register a new account with email + password.
+   * Backend sends an OTP to the email for verification.
+   * Returns id_token and otp_exp for OTP verification step.
+   */
+  async register(email: string, password: string): Promise<RegisterResponse> {
+    return api.post<RegisterResponse>('/api/auth/register', { email, password }, false);
+  },
 
-        if (user.is2FAEnabled) {
-            return {
-                token: '',
-                user,
-                requires2FA: true,
-            };
-        }
+  /**
+   * Verify registration OTP to activate the account.
+   */
+  async verifyRegistrationOtp(
+    id_token: string,
+    otp: string,
+    otp_exp: number,
+    email: string,
+  ): Promise<MessageResponse> {
+    return api.post<MessageResponse>(
+      '/api/auth/register/otp',
+      { id_token, otp, otp_exp, email },
+      false,
+    );
+  },
 
-        return {
-            token: 'mock-jwt-token-xyz-123',
-            user,
-        };
-    },
+  /**
+   * Refresh the access token using the refresh token.
+   */
+  async refreshToken(refreshToken: string): Promise<{ access: string }> {
+    return api.post<{ access: string }>(
+      '/api/auth/refresh_token',
+      { refresh: refreshToken },
+      false,
+    );
+  },
 
-    async register(data: SignUpInput): Promise<{ message: string }> {
-        await mockCall(null);
-        return { message: 'Registration successful. Please verify your email.' };
-    },
+  /**
+   * Step 1: Request password reset. Sends OTP to email.
+   */
+  async requestPasswordReset(email: string): Promise<ResetPasswordResponse> {
+    return api.post<ResetPasswordResponse>('/api/auth/password/reset', { email }, false);
+  },
 
-    async requestPasswordReset(data: RequestPasswordResetInput): Promise<{ message: string }> {
-        await mockCall(null);
-        if (data.email === 'notfound@example.com') {
-            throw { message: 'No account found with this email.', status: 404 } as ApiError;
-        }
-        return { message: 'If an account exists, a reset code has been sent.' };
-    },
+  /**
+   * Step 2: Verify reset password OTP.
+   * Returns reset_token + reset_exp for the confirm step.
+   */
+  async verifyResetOtp(
+    id_token: string,
+    otp: string,
+    otp_exp: number,
+    email: string,
+  ): Promise<ResetPasswordOtpResponse> {
+    return api.post<ResetPasswordOtpResponse>(
+      '/api/auth/password/reset/otp',
+      { id_token, otp, otp_exp, email },
+      false,
+    );
+  },
 
-    async verifyOtp(data: VerifyOtpInput, mode: 'password-reset' | 'account-verify' | '2fa-login'): Promise<{ valid: boolean, token?: string }> {
-        await mockCall(null);
-        if (data.code === '000000') {
-            throw { message: 'Invalid verification code.', status: 400 } as ApiError;
-        }
-        return {
-            valid: true,
-            token: mode === 'password-reset' ? 'temp-reset-token-789' : 'mock-jwt-token-xyz-123'
-        };
-    },
+  /**
+   * Step 3: Set new password after OTP verification.
+   */
+  async resetPassword(
+    reset_token: string,
+    reset_exp: number,
+    email: string,
+    new_password: string,
+  ): Promise<MessageResponse> {
+    return api.post<MessageResponse>(
+      '/api/auth/password/reset/confirm',
+      { reset_token, reset_exp, email, new_password },
+      false,
+    );
+  },
 
-    async setNewPassword(data: SetNewPasswordInput, token: string): Promise<{ message: string }> {
-        await mockCall(null);
-        return { message: 'Password has been successfully updated.' };
+  /**
+   * Logout: invalidate session on backend, then clear local tokens.
+   */
+  async logout(): Promise<void> {
+    try {
+      await api.post('/api/auth/logout', {}, true);
+    } catch {
+      // If logout API fails (expired token, etc.), still clear local tokens
     }
+    await clearTokens();
+  },
 };

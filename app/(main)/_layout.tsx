@@ -4,13 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-interface TabIconProps {
-  name: IconName;
-  color: string;
-  size: number;
-}
-
-function TabIcon({ name, color, size }: TabIconProps) {
+function TabIcon({ name, color, size }: { name: IconName; color: string; size: number }) {
   return <MaterialCommunityIcons name={name} size={size} color={color} />;
 }
 
@@ -45,17 +39,17 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
+        name="accounts"
+        options={{
+          title: 'Accounts',
+          tabBarIcon: ({ color, size }) => <TabIcon name="bank" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="transfers"
         options={{
           title: 'Transfers',
           tabBarIcon: ({ color, size }) => <TabIcon name="swap-horizontal" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="cards"
-        options={{
-          title: 'Cards',
-          tabBarIcon: ({ color, size }) => <TabIcon name="credit-card" color={color} size={size} />,
         }}
       />
       <Tabs.Screen

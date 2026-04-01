@@ -2,6 +2,7 @@ import { Button, HeroImage, Input, NavBar } from '@/components/ui';
 import { AuthService } from '@/lib/api/auth';
 import { LoginInput, loginSchema } from '@/lib/validations/auth';
 import { authenticateWithBiometrics } from '@/utils/biometrics';
+import { getTokens } from '@/lib/api/client';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
@@ -16,21 +17,23 @@ export default function LoginScreen() {
 
   const { control, handleSubmit } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      identifier: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   });
 
   const onSubmit = async (data: LoginInput) => {
     try {
       setIsLoading(true);
-      const response = await AuthService.login(data);
-      if (response.requires2FA) {
-        router.push({ pathname: '/verify-otp', params: { mode: '2fa-login', email: data.identifier } });
-      } else {
-        router.replace('/(main)/home');
-      }
+      const response = await AuthService.login(data.email, data.password);
+      // Backend always sends OTP → navigate to OTP screen
+      router.push({
+        pathname: '/verify-otp',
+        params: {
+          mode: '2fa-login',
+          email: data.email,
+          id_token: response.id_token,
+          otp_exp: String(response.otp_exp),
+        },
+      });
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'An unexpected error occurred.');
     } finally {
@@ -40,11 +43,18 @@ export default function LoginScreen() {
 
   const handleBiometricLogin = async () => {
     setIsLoading(true);
-    const success = await authenticateWithBiometrics();
-    setIsLoading(false);
-
-    if (success) {
-      router.replace('/(main)/home');
+    try {
+      const tokens = await getTokens();
+      if (!tokens) {
+        Alert.alert('No Session', 'Please log in with your credentials first to enable biometric login.');
+        return;
+      }
+      const success = await authenticateWithBiometrics();
+      if (success) {
+        router.replace('/(main)/home');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,10 +83,10 @@ export default function LoginScreen() {
             <View className="gap-4">
               <Controller
                 control={control}
-                name="identifier"
+                name="email"
                 render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <Input
-                    label="Email or Username"
+                    label="Email"
                     placeholder="Enter your email"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -95,18 +105,13 @@ export default function LoginScreen() {
                 render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <Input
                     label="Password"
-                    placeholder="••••••••"
+                    placeholder="••••••••••"
                     secureTextEntry
                     rightIcon="password"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     error={error?.message}
-                    rightAction={
-                      <Pressable onPress={() => router.push('/forgot-password')}>
-                        <Text className="text-primary text-xs font-manrope-semibold">Forgot Password?</Text>
-                      </Pressable>
-                    }
                   />
                 )}
               />
@@ -130,6 +135,13 @@ export default function LoginScreen() {
             </View>
 
             <View className="items-center mt-8 gap-4">
+              <Pressable onPress={() => router.push('/forgot-password')} disabled={isLoading}>
+                <Text className="text-slate-400 text-sm font-manrope">
+                  Forgot your password?{' '}
+                  <Text className="text-primary font-manrope-bold">Reset</Text>
+                </Text>
+              </Pressable>
+
               <Pressable onPress={() => router.push('/sign-up')} disabled={isLoading}>
                 <Text className="text-primary/40 text-sm font-manrope">
                   Don't have an account?{' '}

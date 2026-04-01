@@ -13,30 +13,23 @@ export default function SecurityScreen() {
     getUserProfile().then(setProfile);
   }, []);
 
-  const toggle2FA = async (value: boolean) => {
-    if (!profile) return;
-    const updated = { ...profile, is2FAEnabled: value };
-    await saveUserProfile(updated);
-    setProfile(updated);
-  };
-
   const toggleBiometrics = async (value: boolean) => {
     if (!profile) return;
-    
-    // Test if we can authenticate first before enabling
+
     if (value) {
       const success = await authenticateWithBiometrics();
-      if (!success) return; // authentication failed, don't enable it
+      if (!success) return;
     }
 
     const updated = { ...profile, biometricsEnabled: value };
     await saveUserProfile(updated);
     setProfile(updated);
-    if (!value) {
-        Alert.alert('Biometrics Disabled', 'You will need to use your password to log in.');
-    } else {
-        Alert.alert('Biometrics Enabled', 'You can now log in using your device biometrics.');
-    }
+    Alert.alert(
+      value ? 'Biometrics Enabled' : 'Biometrics Disabled',
+      value
+        ? 'You can now log in using your device biometrics.'
+        : 'You will need to use your password to log in.',
+    );
   };
 
   if (!profile) return null;
@@ -48,6 +41,7 @@ export default function SecurityScreen() {
         <Text className="text-white text-lg font-manrope-bold tracking-tight mb-4">Authentication</Text>
 
         <View className="bg-primary/5 rounded-2xl border border-primary/10 overflow-hidden">
+          {/* 2FA - Always enforced by backend */}
           <View className="flex-row items-center justify-between p-4 border-b border-primary/10">
             <View className="flex-row items-center gap-3">
               <View className="size-10 rounded-full bg-primary/10 items-center justify-center">
@@ -55,17 +49,15 @@ export default function SecurityScreen() {
               </View>
               <View>
                 <Text className="text-white text-sm font-manrope-bold">Two-Factor Auth</Text>
-                <Text className="text-slate-400 text-xs font-manrope">Require an OTP when logging in</Text>
+                <Text className="text-slate-400 text-xs font-manrope">Always active for your security</Text>
               </View>
             </View>
-            <Switch
-              value={profile.is2FAEnabled}
-              onValueChange={toggle2FA}
-              trackColor={{ false: '#334155', true: '#2edc6b' }}
-              thumbColor="#fff"
-            />
+            <View className="bg-primary/10 px-3 py-1 rounded-full">
+              <Text className="text-primary text-xs font-manrope-bold">Always On</Text>
+            </View>
           </View>
 
+          {/* Biometrics */}
           <View className="flex-row items-center justify-between p-4">
             <View className="flex-row items-center gap-3">
               <View className="size-10 rounded-full bg-primary/10 items-center justify-center">
@@ -83,6 +75,14 @@ export default function SecurityScreen() {
               thumbColor="#fff"
             />
           </View>
+        </View>
+
+        {/* Security Info */}
+        <View className="mt-6 bg-primary/5 rounded-xl p-4 border border-primary/10 flex-row items-start gap-3">
+          <MaterialCommunityIcons name="shield-check" size={20} color="rgba(46, 220, 107, 0.5)" />
+          <Text className="text-slate-400 text-xs font-manrope flex-1 leading-relaxed">
+            Your account is protected by two-factor authentication. Every login requires an OTP code sent to your email address.
+          </Text>
         </View>
       </View>
     </SafeAreaView>

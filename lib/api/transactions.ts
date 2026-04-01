@@ -1,23 +1,38 @@
-import { getDb, saveDb, Transaction } from '../mockDb';
+import { Transaction as BackendTransaction } from '../types/api';
+import { api } from './client';
 
 export const TransactionsService = {
-  async getBalance() {
-    const db = await getDb();
-    return db.balance;
+  /** List all transactions for the authenticated user */
+  async list(): Promise<BackendTransaction[]> {
+    return api.get<BackendTransaction[]>('/api/transactions/list');
   },
 
-  async getRecentTransactions(limit = 15): Promise<Transaction[]> {
-    const db = await getDb();
-    return db.transactions.slice(0, limit);
+  /** Deposit money into an account */
+  async deposit(accountId: number, amount: number): Promise<void> {
+    await api.post('/api/transactions/deposit', {
+      account_id: accountId,
+      amount,
+    });
   },
 
-  async getTransactionDetails(id: string): Promise<Transaction | null> {
-    const db = await getDb();
-    return db.transactions.find(tx => tx.id === id) || null;
+  /** Withdraw money from an account */
+  async withdraw(accountId: number, amount: number): Promise<void> {
+    await api.post('/api/transactions/withdraw', {
+      account_id: accountId,
+      amount,
+    });
   },
 
-  async getTransactionsByCategory(category: string): Promise<Transaction[]> {
-    const db = await getDb();
-    return db.transactions.filter(tx => tx.category === category);
+  /** Transfer money between accounts */
+  async transfer(
+    sourceAccountId: number,
+    destinationAccountNumero: string,
+    amount: number,
+  ): Promise<void> {
+    await api.post('/api/transactions/transfer', {
+      source_account_id: sourceAccountId,
+      destination_account_numero: destinationAccountNumero,
+      amount,
+    });
   },
 };
