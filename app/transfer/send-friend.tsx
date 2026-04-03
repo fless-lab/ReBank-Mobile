@@ -10,12 +10,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TransferScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ sourceAccountId?: string }>();
+  const params = useLocalSearchParams<{ sourceAccountId?: string; prefillNumero?: string }>();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(
     params.sourceAccountId ? Number(params.sourceAccountId) : null
   );
-  const [destinationNumero, setDestinationNumero] = useState('');
+  const [destinationNumero, setDestinationNumero] = useState(params.prefillNumero || '');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
