@@ -184,10 +184,11 @@ export default function HomeScreen() {
             <Text className="text-muted text-sm font-manrope text-center py-8">
               Aucune transaction pour le moment
             </Text>
-          ) : (
-            transactions.map((tx) => {
+          ) : (() => {
+            const myNums = new Set(accounts.map(a => a.numero).filter(Boolean));
+            return transactions.map((tx) => {
               const config = TX_TYPE_CONFIG[tx.transaction_type];
-              const isDeposit = tx.transaction_type === 'DEPOSIT';
+              const isIncoming = tx.transaction_type === 'DEPOSIT' || (tx.transaction_type === 'TRANSFER' && !!tx.source_account && !myNums.has(tx.source_account.numero));
               const dateStr = new Date(tx.created_at).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
 
               let title = TX_TYPE_FR[tx.transaction_type] || tx.transaction_type;
@@ -214,8 +215,8 @@ export default function HomeScreen() {
                     </View>
                   </View>
                   <View className="items-end">
-                    <Text className={`text-sm font-manrope-bold ${isDeposit ? 'text-[#5B8C5A]' : 'text-foreground'}`}>
-                      {isDeposit ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} MAD
+                    <Text className={`text-sm font-manrope-bold ${isIncoming ? 'text-[#5B8C5A]' : 'text-foreground'}`}>
+                      {isIncoming ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} MAD
                     </Text>
                     <View className={`px-2 py-0.5 rounded-full mt-1 ${
                       tx.status === 'COMPLETED' ? 'bg-[#5B8C5A]/10' :
@@ -229,8 +230,8 @@ export default function HomeScreen() {
                   </View>
                 </View>
               );
-            })
-          )}
+            });
+          })()}
         </View>
       </ScrollView>
     </SafeAreaView>

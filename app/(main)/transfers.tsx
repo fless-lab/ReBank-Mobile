@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WadOfMoney, CashOut, CardTransfer, History, TransferHorizontal } from '@solar-icons/react-native/BoldDuotone';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { TransferOptionCard } from '@/components/ui';
-import { TransactionsService } from '@/lib/api/transactions';
-import { Transaction } from '@/lib/types/api';
+import { TransferOptionCard, QuickSendContact } from '@/components/ui';
+import { AccountsService } from '@/lib/api/accounts';
+import { TransactionsService, RecentContact } from '@/lib/api/transactions';
+import { BankAccount, Transaction } from '@/lib/types/api';
 
 const TX_TYPE_CONFIG = {
   DEPOSIT: { Icon: WadOfMoney, color: '#5B8C5A', label: 'Dépôt' },
@@ -17,11 +18,19 @@ const TX_TYPE_CONFIG = {
 export default function TransfersScreen() {
   const router = useRouter();
   const [recentTx, setRecentTx] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [contacts, setContacts] = useState<RecentContact[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       TransactionsService.list()
         .then((txs) => setRecentTx(txs.slice(0, 5)))
+        .catch(() => {});
+      AccountsService.list()
+        .then(setAccounts)
+        .catch(() => {});
+      TransactionsService.recentContacts()
+        .then(setContacts)
         .catch(() => {});
     }, [])
   );
@@ -63,6 +72,32 @@ export default function TransfersScreen() {
           />
         </View>
 
+        {/* Recent Contacts */}
+        {contacts.length > 0 && (
+          <View className="mt-6">
+            <Text className="text-foreground text-lg font-manrope-bold tracking-tight mb-3 px-6">Envoi Rapide</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}
+            >
+              <QuickSendContact
+                name="Nouveau"
+                isNew
+                onPress={() => router.push('/transfer/send-friend' as any)}
+              />
+              {contacts.map((c) => (
+                <QuickSendContact
+                  key={c.numero}
+                  name={`${c.first_name} ${c.last_name}`}
+                  seed={String(c.numero)}
+                  onPress={() => router.push({ pathname: '/transfer/send-friend' as any, params: { prefillNumero: String(c.numero) } })}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Recent Transactions */}
         <View className="px-6 mt-8">
           <Text className="text-foreground text-lg font-manrope-bold tracking-tight mb-4">Activité Récente</Text>
@@ -71,15 +106,19 @@ export default function TransfersScreen() {
               <History size={40} color="#B5A99D" />
               <Text className="text-muted text-sm font-manrope mt-3">Aucune transaction récente</Text>
             </View>
-          ) : (
-            recentTx.map((tx) => {
+          ) : (() => {
+            const myNums = new Set(accounts.map(a => a.numero).filter(Boolean));
+            return recentTx.map((tx) => {
               const config = TX_TYPE_CONFIG[tx.transaction_type];
-              const isDeposit = tx.transaction_type === 'DEPOSIT';
+              const isIncoming = tx.transaction_type === 'DEPOSIT' || (tx.transaction_type === 'TRANSFER' && !!tx.source_account && !myNums.has(tx.source_account.numero));
               const dateStr = new Date(tx.created_at).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
 
               let title = config.label;
               if (tx.transaction_type === 'TRANSFER' && tx.destination_account) {
                 title = `Vers ${tx.destination_account.first_name} ${tx.destination_account.last_name}`;
+              }
+              if (tx.transaction_type === 'TRANSFER' && tx.source_account) {
+                title = `De ${tx.source_account.first_name} ${tx.source_account.last_name}`;
               }
 
               return (
@@ -96,13 +135,13 @@ export default function TransfersScreen() {
                       <Text className="text-xs text-muted font-manrope mt-0.5">{dateStr}</Text>
                     </View>
                   </View>
-                  <Text className={`text-base font-manrope-bold ${isDeposit ? 'text-[#5B8C5A]' : 'text-foreground'}`}>
-                    {isDeposit ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} MAD
+                  <Text className={`text-base font-manrope-bold ${isIncoming ? 'text-[#5B8C5A]' : 'text-foreground'}`}>
+                    {isIncoming ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} MAD
                   </Text>
                 </View>
               );
-            })
-          )}
+            });
+          })()}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,6 +1,7 @@
 import { ScreenHeader } from '@/components/ui';
+import { AccountsService } from '@/lib/api/accounts';
 import { TransactionsService } from '@/lib/api/transactions';
-import { Transaction } from '@/lib/types/api';
+import { BankAccount, Transaction } from '@/lib/types/api';
 import { WadOfMoney, CashOut, CardTransfer, DangerCircle } from '@solar-icons/react-native/BoldDuotone';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -28,12 +29,16 @@ const TX_TYPE_LABELS: Record<string, string> = {
 export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [tx, setTx] = useState<Transaction | null>(null);
+  const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    TransactionsService.list().then((txs) => {
-      const found = txs.find((t) => String(t.id) === id);
-      setTx(found || null);
+    Promise.all([
+      TransactionsService.detail(Number(id)),
+      AccountsService.list(),
+    ]).then(([transaction, accs]) => {
+      setTx(transaction);
+      setAccounts(accs);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
@@ -59,12 +64,16 @@ export default function TransactionDetailScreen() {
   }
 
   const config = TX_TYPE_CONFIG[tx.transaction_type];
-  const isDeposit = tx.transaction_type === 'DEPOSIT';
+  const myNums = new Set(accounts.map(a => a.numero).filter(Boolean));
+  const isIncoming = tx.transaction_type === 'DEPOSIT' || (tx.transaction_type === 'TRANSFER' && !!tx.source_account && !myNums.has(tx.source_account.numero));
   const statusStyle = STATUS_STYLES[tx.status] || STATUS_STYLES.COMPLETED;
 
   let title = config.label;
   if (tx.transaction_type === 'TRANSFER' && tx.destination_account) {
     title = `Virement vers ${tx.destination_account.first_name} ${tx.destination_account.last_name}`;
+  }
+  if (tx.transaction_type === 'TRANSFER' && tx.source_account) {
+    title = `Virement de ${tx.source_account.first_name} ${tx.source_account.last_name}`;
   }
 
   return (
@@ -83,8 +92,8 @@ export default function TransactionDetailScreen() {
             <Text className="text-xs font-manrope-bold uppercase text-primary">{TX_TYPE_LABELS[tx.transaction_type] || tx.transaction_type}</Text>
           </View>
 
-          <Text className={`text-4xl font-manrope-bold ${isDeposit ? 'text-[#5B8C5A]' : 'text-foreground'}`}>
-            {isDeposit ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} MAD
+          <Text className={`text-4xl font-manrope-bold ${isIncoming ? 'text-[#5B8C5A]' : 'text-foreground'}`}>
+            {isIncoming ? '+' : '-'}{tx.amount.toLocaleString('fr-FR')} MAD
           </Text>
         </View>
 
