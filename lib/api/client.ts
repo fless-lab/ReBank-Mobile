@@ -1,14 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { AuthTokens } from '../types/api';
 import { API_BASE_URL } from './config';
+import { signRequest } from './hmac';
 
-const TOKEN_KEY = '@rebank_auth_tokens';
+const TOKEN_KEY = 'rebank_auth_tokens';
 
-// ── Token management ────────────────────────────────────
+// ── Token management (encrypted via SecureStore) ────────
 
 export async function getTokens(): Promise<AuthTokens | null> {
   try {
-    const json = await AsyncStorage.getItem(TOKEN_KEY);
+    // SecureStore not available on web — fall back to in-memory
+    if (Platform.OS === 'web') return _webTokens;
+    const json = await SecureStore.getItemAsync(TOKEN_KEY);
     return json ? JSON.parse(json) : null;
   } catch {
     return null;
@@ -16,15 +20,25 @@ export async function getTokens(): Promise<AuthTokens | null> {
 }
 
 export async function saveTokens(tokens: AuthTokens): Promise<void> {
-  await AsyncStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
+  if (Platform.OS === 'web') {
+    _webTokens = tokens;
+    return;
+  }
+  await SecureStore.setItemAsync(TOKEN_KEY, JSON.stringify(tokens));
 }
 
 export async function clearTokens(): Promise<void> {
-  await AsyncStorage.removeItem(TOKEN_KEY);
+  if (Platform.OS === 'web') {
+    _webTokens = null;
+    return;
+  }
+  await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
-// ── API error ───────────────────────────────────────────
+// Web fallback (in-memory only, acceptable for dev)
+let _webTokens: AuthTokens | null = null;
 
+// ── API error ───────────────────────────────────────────
 export interface ApiError {
   message: string;
   status?: number;
@@ -77,6 +91,14 @@ async function request<T = any>(options: RequestOptions): Promise<T> {
   } else if (body) {
     headers['Content-Type'] = 'application/json';
     fetchBody = JSON.stringify(body);
+  }
+
+  // HMAC request signing for API endpoints
+  if (path.startsWith('/api/')) {
+    const bodyStr = typeof fetchBody === 'string' ? fetchBody : '';
+    const { timestamp, signature } = signRequest(method, path, bodyStr);
+    headers['X-Timestamp'] = timestamp;
+    headers['X-Signature'] = signature;
   }
 
   let response = await fetch(`${API_BASE_URL}${path}`, {
