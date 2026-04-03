@@ -25,16 +25,22 @@ export default function LoginScreen() {
     try {
       setIsLoading(true);
       const response = await AuthService.login(data.email, data.password);
-      // Backend always sends OTP → navigate to OTP screen
-      router.push({
-        pathname: '/verify-otp',
-        params: {
-          mode: '2fa-login',
-          email: data.email,
-          id_token: response.id_token,
-          otp_exp: String(response.otp_exp),
-        },
-      });
+
+      if (response.two_factor_required) {
+        // 2FA enabled — OTP sent, go to verification screen
+        router.push({
+          pathname: '/verify-otp',
+          params: {
+            mode: '2fa-login',
+            email: data.email,
+            id_token: response.id_token!,
+            otp_exp: String(response.otp_exp!),
+          },
+        });
+      } else {
+        // 2FA disabled — tokens already saved by AuthService.login()
+        router.replace('/(main)/home');
+      }
     } catch (error: any) {
       Alert.alert('Connexion Echouée', error.message || 'Une erreur inattendue est survenue.');
     } finally {

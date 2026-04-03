@@ -39,8 +39,20 @@ export interface Transaction {
 }
 
 export interface LoginResponse {
-  id_token: string;
-  otp_exp: number;
+  two_factor_required: boolean;
+  // Present when two_factor_required is true
+  id_token?: string;
+  otp_exp?: number;
+  // Present when two_factor_required is false (direct login)
+  access_token?: string;
+  refresh_token?: string;
+}
+
+export interface UserProfileResponse {
+  email: string;
+  first_name: string;
+  last_name: string;
+  two_factor_enabled: boolean;
 }
 
 export interface LoginOtpResponse {

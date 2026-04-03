@@ -1,10 +1,21 @@
 import { Transaction as BackendTransaction } from '../types/api';
 import { api } from './client';
 
+export interface RecentContact {
+  numero: number;
+  first_name: string;
+  last_name: string;
+}
+
 export const TransactionsService = {
   /** List all transactions for the authenticated user */
   async list(): Promise<BackendTransaction[]> {
     return api.get<BackendTransaction[]>('/api/transactions/list');
+  },
+
+  /** Get a single transaction by ID */
+  async detail(id: number): Promise<BackendTransaction> {
+    return api.get<BackendTransaction>(`/api/transactions/${id}`);
   },
 
   /** Deposit money into an account */
@@ -34,5 +45,10 @@ export const TransactionsService = {
       destination_account_numero: destinationAccountNumero,
       amount,
     });
+  },
+
+  /** Get recent transfer recipients (deduplicated, max 10) */
+  async recentContacts(): Promise<RecentContact[]> {
+    return api.get<RecentContact[]>('/api/contacts/recent');
   },
 };

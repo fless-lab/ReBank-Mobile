@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LoginOtpResponse, LoginResponse, MessageResponse, RegisterResponse, ResetPasswordResponse, ResetPasswordOtpResponse } from '../types/api';
+import { LoginOtpResponse, LoginResponse, MessageResponse, RegisterResponse, ResetPasswordResponse, ResetPasswordOtpResponse, UserProfileResponse } from '../types/api';
 import { api, clearTokens, saveTokens } from './client';
 
 const USER_EMAIL_KEY = '@rebank_user_email';
@@ -11,11 +11,19 @@ export async function getUserEmail(): Promise<string | null> {
 export const AuthService = {
   /**
    * Step 1: Login with email + password.
-   * Backend always sends an OTP to the user's email.
-   * Returns id_token and otp_exp needed for step 2.
+   * If 2FA is enabled: returns id_token/otp_exp (OTP sent to email).
+   * If 2FA is disabled: returns tokens directly (no OTP step needed).
    */
   async login(email: string, password: string): Promise<LoginResponse> {
-    return api.post<LoginResponse>('/api/auth/login', { email, password }, false);
+    const response = await api.post<LoginResponse>('/api/auth/login', { email, password }, false);
+
+    // 2FA disabled — save tokens immediately
+    if (!response.two_factor_required && response.access_token && response.refresh_token) {
+      await saveTokens({ access_token: response.access_token, refresh_token: response.refresh_token });
+      await AsyncStorage.setItem(USER_EMAIL_KEY, email);
+    }
+
+    return response;
   },
 
   /**
@@ -111,6 +119,24 @@ export const AuthService = {
       '/api/auth/password/reset/confirm',
       { reset_token, reset_exp, email, new_password },
       false,
+    );
+  },
+
+  /**
+   * Get current user profile (email, name, 2FA status).
+   */
+  async getProfile(): Promise<UserProfileResponse> {
+    return api.get<UserProfileResponse>('/api/auth/profile');
+  },
+
+  /**
+   * Enable or disable 2FA for the authenticated user.
+   */
+  async toggle2FA(enabled: boolean): Promise<{ message: string; two_factor_enabled: boolean }> {
+    return api.post<{ message: string; two_factor_enabled: boolean }>(
+      '/api/auth/2fa/toggle',
+      { enabled },
+      true,
     );
   },
 
